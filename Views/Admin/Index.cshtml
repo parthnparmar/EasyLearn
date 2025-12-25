@@ -1,0 +1,301 @@
+@model EasyLearn.Models.ViewModels.AdminDashboardViewModel
+@{
+    ViewData["Title"] = "Admin Dashboard";
+}
+
+<div class="container-fluid fade-in">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="fas fa-tachometer-alt text-primary"></i> Admin Dashboard
+        </h1>
+        <div class="d-none d-sm-inline-block">
+            <span class="text-muted">Welcome back, Administrator</span>
+        </div>
+    </div>
+
+    <!-- Stats Cards Row -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="modern-card gradient-primary stats-card h-100 pulse">
+                <div class="stats-number">@Model.TotalUsers</div>
+                <div class="stats-label">
+                    <i class="fas fa-users"></i> Total Users
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="modern-card gradient-success stats-card h-100">
+                <div class="stats-number">@Model.TotalCourses</div>
+                <div class="stats-label">
+                    <i class="fas fa-book"></i> Total Courses
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="modern-card gradient-warning stats-card h-100">
+                <div class="stats-number">@Model.PendingApprovals</div>
+                <div class="stats-label">
+                    <i class="fas fa-clock"></i> Pending Approvals
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="modern-card gradient-info stats-card h-100">
+                <div class="stats-number">@Model.TotalEnrollments</div>
+                <div class="stats-label">
+                    <i class="fas fa-user-graduate"></i> Total Enrollments
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="modern-card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-bolt"></i> Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <a href="/admin/users" class="btn btn-modern btn-outline-primary w-100">
+                                <i class="fas fa-users"></i><br>
+                                <small>Manage Users</small>
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="/admin/courses/approval" class="btn btn-modern btn-outline-warning w-100">
+                                <i class="fas fa-check-circle"></i><br>
+                                <small>Course Approvals</small>
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="/admin/categories" class="btn btn-modern btn-outline-info w-100">
+                                <i class="fas fa-tags"></i><br>
+                                <small>Categories</small>
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="/admin/announcements" class="btn btn-modern btn-outline-success w-100">
+                                <i class="fas fa-bullhorn"></i><br>
+                                <small>Announcements</small>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Pending Courses -->
+        <div class="col-lg-8 mb-4">
+            <div class="modern-card">
+                <div class="card-header bg-warning text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-clock"></i> Pending Course Approvals</h5>
+                    <a href="/admin/courses/approval" class="btn btn-sm btn-light">View All</a>
+                </div>
+                <div class="card-body">
+                    @if (Model.PendingCourses.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-modern">
+                                <thead>
+                                    <tr>
+                                        <th>Course</th>
+                                        <th>Instructor</th>
+                                        <th>Category</th>
+                                        <th>Created</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var course in Model.PendingCourses)
+                                    {
+                                        <tr class="slide-in">
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <div class="course-image-small bg-primary rounded me-3" style="width: 40px; height: 40px;"></div>
+                                                    <div>
+                                                        <strong>@course.Title</strong><br>
+                                                        <small class="text-muted">@(course.Price == 0 ? "Free" : course.Price.ToString("C"))</small>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>@course.Instructor.FirstName @course.Instructor.LastName</td>
+                                            <td><span class="badge bg-secondary">@course.Category.Name</span></td>
+                                            <td>@course.CreatedAt.ToString("MMM dd, yyyy")</td>
+                                            <td>
+                                                <div class="btn-group" role="group">
+                                                    <button type="button" class="btn btn-sm btn-success" onclick="approveCourse(@course.Id)">
+                                                        <i class="fas fa-check"></i>
+                                                    </button>
+                                                    <button type="button" class="btn btn-sm btn-danger" onclick="rejectCourse(@course.Id)">
+                                                        <i class="fas fa-times"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-4">
+                            <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                            <h5>No Pending Approvals</h5>
+                            <p class="text-muted">All courses have been reviewed!</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Users -->
+        <div class="col-lg-4 mb-4">
+            <div class="modern-card">
+                <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-user-plus"></i> Recent Users</h5>
+                    <a href="/admin/users" class="btn btn-sm btn-light">View All</a>
+                </div>
+                <div class="card-body">
+                    @if (Model.RecentUsers.Any())
+                    {
+                        @foreach (var user in Model.RecentUsers.Take(5))
+                        {
+                            <div class="d-flex align-items-center mb-3 slide-in">
+                                <div class="avatar-circle me-3">
+                                    @user.FirstName.First()@user.LastName.First()
+                                </div>
+                                <div class="flex-grow-1">
+                                    <strong>@user.FirstName @user.LastName</strong><br>
+                                    <small class="text-muted">@user.Email</small>
+                                </div>
+                                <div>
+                                    <span class="badge bg-@(user.IsActive ? "success" : "danger")">
+                                        @(user.IsActive ? "Active" : "Inactive")
+                                    </span>
+                                </div>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="text-center py-3">
+                            <i class="fas fa-users fa-2x text-muted mb-2"></i>
+                            <p class="text-muted">No recent users</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Export Section -->
+    <div class="row">
+        <div class="col-12">
+            <div class="modern-card">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0"><i class="fas fa-download"></i> Export Data</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <a href="/admin/export/users" class="btn btn-modern btn-outline-primary w-100">
+                                <i class="fas fa-file-csv"></i> Export Users (CSV)
+                            </a>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <a href="/admin/export/courses" class="btn btn-modern btn-outline-success w-100">
+                                <i class="fas fa-file-csv"></i> Export Courses (CSV)
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function approveCourse(courseId) {
+            if (confirm('Are you sure you want to approve this course?')) {
+                fetch(`/admin/courses/approve/${courseId}`, {
+                    method: 'POST',
+                    headers: {
+                        'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                    }
+                }).then(() => {
+                    showNotification('Course approved successfully!', 'success');
+                    setTimeout(() => location.reload(), 1500);
+                });
+            }
+        }
+
+        function rejectCourse(courseId) {
+            if (confirm('Are you sure you want to reject this course?')) {
+                fetch(`/admin/courses/reject/${courseId}`, {
+                    method: 'POST',
+                    headers: {
+                        'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                    }
+                }).then(() => {
+                    showNotification('Course rejected successfully!', 'warning');
+                    setTimeout(() => location.reload(), 1500);
+                });
+            }
+        }
+
+        function showNotification(message, type) {
+            const notification = $(`
+                <div class="notification ${type}">
+                    <i class="fas fa-${type === 'success' ? 'check' : type === 'warning' ? 'exclamation' : 'info'}-circle me-2"></i>
+                    ${message}
+                </div>
+            `);
+            
+            $('body').append(notification);
+            setTimeout(() => notification.addClass('show'), 100);
+            setTimeout(() => {
+                notification.removeClass('show');
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+
+        // Add loading animation to buttons
+        $(document).on('click', '.btn-modern', function() {
+            const btn = $(this);
+            const originalText = btn.html();
+            btn.html('<span class="loading-spinner me-2"></span>Loading...');
+            
+            setTimeout(() => {
+                btn.html(originalText);
+            }, 1000);
+        });
+
+        // Animate stats on page load
+        $(document).ready(function() {
+            $('.stats-number').each(function() {
+                const $this = $(this);
+                const countTo = parseInt($this.text());
+                
+                $({ countNum: 0 }).animate({
+                    countNum: countTo
+                }, {
+                    duration: 2000,
+                    easing: 'swing',
+                    step: function() {
+                        $this.text(Math.floor(this.countNum));
+                    },
+                    complete: function() {
+                        $this.text(countTo);
+                    }
+                });
+            });
+        });
+    </script>
+}

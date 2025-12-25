@@ -1,0 +1,75 @@
+@model EasyLearn.Models.ViewModels.CourseCreateViewModel
+@{
+    ViewData["Title"] = "Create Course";
+}
+
+<link rel="stylesheet" href="~/css/premium-courses.css" />
+
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header" style="background: var(--primary); color: white;">
+                    <h4 class="mb-0">Create New Course</h4>
+                </div>
+                
+                <div class="card-body p-4">
+                    <form asp-action="CreateCourse" method="post">
+                        <div class="mb-3">
+                            <label asp-for="Title" class="form-label fw-bold">Course Title</label>
+                            <input asp-for="Title" class="form-control" required>
+                            <span asp-validation-for="Title" class="text-danger"></span>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="CategoryId" class="form-label fw-bold">Category</label>
+                                <select asp-for="CategoryId" class="form-select" required>
+                                    <option value="">Select Category</option>
+                                    @if (ViewBag.Categories != null)
+                                    {
+                                        @foreach (var category in (ViewBag.Categories as List<EasyLearn.Models.Category>) ?? new List<EasyLearn.Models.Category>())
+                                        {
+                                            <option value="@category.Id">@category.Name</option>
+                                        }
+                                    }
+                                </select>
+                                <span asp-validation-for="CategoryId" class="text-danger"></span>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Price" class="form-label fw-bold">Price ($)</label>
+                                <input asp-for="Price" type="number" step="0.01" min="0" class="form-control" placeholder="0.00">
+                                <span asp-validation-for="Price" class="text-danger"></span>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label asp-for="Description" class="form-label fw-bold">Description</label>
+                            <textarea asp-for="Description" class="form-control" rows="4" required></textarea>
+                            <span asp-validation-for="Description" class="text-danger"></span>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label asp-for="ThumbnailUrl" class="form-label fw-bold">Thumbnail Image URL</label>
+                            <input asp-for="ThumbnailUrl" type="url" class="form-control" placeholder="https://example.com/image.jpg">
+                            <span asp-validation-for="ThumbnailUrl" class="text-danger"></span>
+                        </div>
+                        
+                        <div class="form-check mb-3">
+                            <input asp-for="IsFeatured" class="form-check-input" type="checkbox">
+                            <label asp-for="IsFeatured" class="form-check-label fw-bold">
+                                Featured Course
+                            </label>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="/instructor/my-courses" class="btn btn-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-premium">Create Course</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

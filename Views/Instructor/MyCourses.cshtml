@@ -1,0 +1,279 @@
+@model List<EasyLearn.Models.Course>
+@{
+    ViewData["Title"] = "My Courses";
+}
+
+<div class="container-fluid fade-in">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="fas fa-book-open text-primary"></i> My Courses
+        </h1>
+        <a href="/instructor/CreateCourse" class="btn btn-modern btn-primary">
+            <i class="fas fa-plus"></i> Create New Course
+        </a>
+    </div>
+
+    <!-- Filter and Search -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="modern-card">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-4">
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                <input type="text" class="form-control" id="searchCourses" placeholder="Search courses...">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <select class="form-select" id="statusFilter">
+                                <option value="">All Status</option>
+                                <option value="approved">Approved</option>
+                                <option value="pending">Pending</option>
+                                <option value="rejected">Rejected</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <select class="form-select" id="categoryFilter">
+                                <option value="">All Categories</option>
+                                <option value="programming">Programming</option>
+                                <option value="design">Design</option>
+                                <option value="business">Business</option>
+                                <option value="marketing">Marketing</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <button class="btn btn-modern btn-outline-secondary w-100" onclick="clearFilters()">
+                                <i class="fas fa-times"></i> Clear
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (Model.Any())
+    {
+        <!-- Courses Grid -->
+        <div class="row" id="coursesContainer">
+            @foreach (var course in Model)
+            {
+                <div class="col-lg-4 col-md-6 mb-4 course-item" 
+                     data-status="@(course.IsApproved ? "approved" : "pending")" 
+                     data-category="@course.Category.Name.ToLower()"
+                     data-title="@course.Title.ToLower()">
+                    <div class="course-card-modern">
+                        <div class="course-image">
+                            @if (!string.IsNullOrEmpty(course.ImageUrl))
+                            {
+                                <img src="@course.ImageUrl" alt="@course.Title" class="w-100 h-100" style="object-fit: cover;">
+                            }
+                            else
+                            {
+                                <div class="d-flex align-items-center justify-content-center h-100">
+                                    <i class="fas fa-book fa-3x text-white"></i>
+                                </div>
+                            }
+                            <div class="course-price">
+                                @(course.Price == 0 ? "Free" : course.Price.ToString("C"))
+                            </div>
+                            <div class="position-absolute top-0 start-0 m-3">
+                                <span class="badge bg-@(course.IsApproved ? "success" : "warning")">
+                                    @(course.IsApproved ? "Approved" : "Pending")
+                                </span>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <h5 class="card-title">@course.Title</h5>
+                            <p class="card-text text-muted">@course.Description.Substring(0, Math.Min(100, course.Description.Length))...</p>
+                            
+                            <div class="row text-center mb-3">
+                                <div class="col-4">
+                                    <small class="text-muted">Students</small><br>
+                                    <strong>@course.Enrollments.Count</strong>
+                                </div>
+                                <div class="col-4">
+                                    <small class="text-muted">Lessons</small><br>
+                                    <strong>@course.Lessons.Count</strong>
+                                </div>
+                                <div class="col-4">
+                                    <small class="text-muted">Rating</small><br>
+                                    <strong>@(course.Reviews.Any() ? course.Reviews.Average(r => r.Rating).ToString("F1") : "N/A")</strong>
+                                </div>
+                            </div>
+
+                            <div class="d-grid gap-2">
+                                <div class="btn-group" role="group">
+                                    <a href="/instructor/EditCourse/@course.Id" class="btn btn-modern btn-outline-primary btn-sm">
+                                        <i class="fas fa-edit"></i> Edit
+                                    </a>
+                                    <a href="/instructor/ManageLessons/@course.Id" class="btn btn-modern btn-outline-success btn-sm">
+                                        <i class="fas fa-play"></i> Lessons
+                                    </a>
+                                    <a href="/instructor/ManageQuizzes/@course.Id" class="btn btn-modern btn-outline-info btn-sm">
+                                        <i class="fas fa-question-circle"></i> Quizzes
+                                    </a>
+                                </div>
+                                <button class="btn btn-modern btn-outline-secondary btn-sm" onclick="showCourseAnalytics(@course.Id)">
+                                    <i class="fas fa-chart-line"></i> Analytics
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- Pagination -->
+        <div class="row">
+            <div class="col-12">
+                <nav aria-label="Courses pagination">
+                    <ul class="pagination justify-content-center">
+                        <li class="page-item disabled">
+                            <a class="page-link" href="#" tabindex="-1">Previous</a>
+                        </li>
+                        <li class="page-item active">
+                            <a class="page-link" href="#">1</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="#">2</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="#">3</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="#">Next</a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    }
+    else
+    {
+        <!-- Empty State -->
+        <div class="row">
+            <div class="col-12">
+                <div class="modern-card">
+                    <div class="card-body text-center py-5">
+                        <i class="fas fa-book fa-5x text-muted mb-4"></i>
+                        <h3>No Courses Yet</h3>
+                        <p class="text-muted mb-4">Start sharing your knowledge by creating your first course!</p>
+                        <a href="/instructor/CreateCourse" class="btn btn-modern btn-primary btn-lg">
+                            <i class="fas fa-plus"></i> Create Your First Course
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<!-- Course Analytics Modal -->
+<div class="modal fade modal-modern" id="analyticsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-chart-line"></i> Course Analytics</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <div class="text-center">
+                            <div class="stats-number text-primary">156</div>
+                            <div class="stats-label">Total Views</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="text-center">
+                            <div class="stats-number text-success">89</div>
+                            <div class="stats-label">Enrollments</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="text-center">
+                            <div class="stats-number text-info">67</div>
+                            <div class="stats-label">Completions</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="text-center">
+                            <div class="stats-number text-warning">4.7</div>
+                            <div class="stats-label">Avg Rating</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-4">
+                    <h6>Completion Rate</h6>
+                    <div class="progress-modern">
+                        <div class="progress-bar-modern" style="width: 75%"></div>
+                    </div>
+                    <small class="text-muted">75% of students complete this course</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function showCourseAnalytics(courseId) {
+            $('#analyticsModal').modal('show');
+        }
+
+        function clearFilters() {
+            $('#searchCourses').val('');
+            $('#statusFilter').val('');
+            $('#categoryFilter').val('');
+            filterCourses();
+        }
+
+        function filterCourses() {
+            const search = $('#searchCourses').val().toLowerCase();
+            const status = $('#statusFilter').val();
+            const category = $('#categoryFilter').val();
+
+            $('.course-item').each(function() {
+                const $item = $(this);
+                const title = $item.data('title');
+                const itemStatus = $item.data('status');
+                const itemCategory = $item.data('category');
+
+                let show = true;
+
+                if (search && !title.includes(search)) {
+                    show = false;
+                }
+
+                if (status && itemStatus !== status) {
+                    show = false;
+                }
+
+                if (category && itemCategory !== category) {
+                    show = false;
+                }
+
+                if (show) {
+                    $item.removeClass('d-none').addClass('fade-in');
+                } else {
+                    $item.addClass('d-none');
+                }
+            });
+        }
+
+        // Event listeners
+        $('#searchCourses').on('input', filterCourses);
+        $('#statusFilter, #categoryFilter').on('change', filterCourses);
+
+        // Initialize animations
+        $(document).ready(function() {
+            // Stagger animation for course cards
+            $('.course-item').each(function(index) {
+                $(this).css('animation-delay', (index * 0.1) + 's');
+            });
+        });
+    </script>
+}

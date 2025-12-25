@@ -1,0 +1,248 @@
+@model List<EasyLearn.Models.Course>
+@{
+    ViewData["Title"] = "Browse Courses";
+}
+
+<link rel="stylesheet" href="~/css/course-system.css" />
+
+<div class="container-fluid py-4">
+    <!-- Hero Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="course-hero">
+                <div class="container">
+                    <div class="text-center text-white">
+                        <h1 class="display-4 fw-bold mb-3">Discover Amazing Courses</h1>
+                        <p class="lead mb-4">Learn new skills and advance your career with our premium courses</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Filter Bar -->
+        <div class="filter-bar fade-in">
+            <div class="filter-controls">
+                <div class="row g-3 align-items-center w-100">
+                    <div class="col-md-4">
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-search"></i></span>
+                            <input type="text" class="form-control" id="courseSearch" placeholder="Search courses..." value="@ViewBag.Search">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select" id="categoryFilter">
+                            <option value="">All Categories</option>
+                            @foreach (var category in (ViewBag.Categories as List<EasyLearn.Models.Category>) ?? new List<EasyLearn.Models.Category>())
+                            {
+                                <option value="@category.Id" selected="@(ViewBag.SelectedCategory?.ToString() == category.Id.ToString() ? "selected" : null)">
+                                    @category.Name
+                                </option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <select class="form-select" id="priceFilter">
+                            <option value="">All Prices</option>
+                            <option value="free">Free</option>
+                            <option value="paid">Paid</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <select class="form-select" id="sortFilter">
+                            <option value="newest">Newest</option>
+                            <option value="popular">Most Popular</option>
+                            <option value="rating">Highest Rated</option>
+                            <option value="price-low">Price: Low to High</option>
+                            <option value="price-high">Price: High to Low</option>
+                        </select>
+                    </div>
+                    <div class="col-md-1">
+                        <button class="btn btn-outline-primary" id="clearFilters">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Course Results -->
+        <div class="row mb-3">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">Found @Model.Count courses</h4>
+                    <div class="view-toggle">
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-outline-secondary active" id="gridView">
+                                <i class="fas fa-th"></i>
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" id="listView">
+                                <i class="fas fa-list"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Courses Grid -->
+        <div class="courses-grid" id="coursesContainer">
+            @foreach (var course in Model)
+            {
+                <div class="course-card slide-up" 
+                     data-category="@course.CategoryId" 
+                     data-price="@course.Price" 
+                     data-rating="@course.AverageRating">
+                    
+                    <div class="course-card-image">
+                        @if (!string.IsNullOrEmpty(course.ThumbnailUrl))
+                        {
+                            <img src="@course.ThumbnailUrl" alt="@course.Title" loading="lazy">
+                        }
+                        else if (!string.IsNullOrEmpty(course.ImageUrl))
+                        {
+                            <img src="@course.ImageUrl" alt="@course.Title" loading="lazy">
+                        }
+                        else
+                        {
+                            <div class="placeholder-image d-flex align-items-center justify-content-center text-white">
+                                <i class="fas fa-play-circle fa-3x"></i>
+                            </div>
+                        }
+                        
+                        <div class="course-card-overlay">
+                            <div class="play-button">
+                                <i class="fas fa-play"></i>
+                            </div>
+                        </div>
+                        
+                        @if (course.IsFeatured)
+                        {
+                            <div class="position-absolute top-0 start-0 m-2">
+                                <span class="badge bg-warning text-dark">
+                                    <i class="fas fa-star"></i> Featured
+                                </span>
+                            </div>
+                        }
+                        
+                        @if (course.IsFree)
+                        {
+                            <div class="position-absolute top-0 end-0 m-2">
+                                <span class="badge bg-success">FREE</span>
+                            </div>
+                        }
+                    </div>
+                    
+                    <div class="course-card-body">
+                        <h5 class="course-card-title">@course.Title</h5>
+                        <p class="course-card-description">@course.Description</p>
+                        
+                        <div class="course-instructor mb-2">
+                            <div class="instructor-avatar">
+                                @course.Instructor.FirstName.Substring(0, 1)@course.Instructor.LastName.Substring(0, 1)
+                            </div>
+                            <span class="instructor-name">@course.Instructor.FirstName @course.Instructor.LastName</span>
+                        </div>
+                        
+                        <div class="course-card-meta">
+                            <div class="course-rating">
+                                @for (int i = 1; i <= 5; i++)
+                                {
+                                    @if (i <= course.AverageRating)
+                                    {
+                                        <i class="fas fa-star rating-stars"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="far fa-star rating-stars"></i>
+                                    }
+                                }
+                                <span class="rating-count">(@course.Reviews.Count)</span>
+                            </div>
+                            
+                            <div class="course-price @(course.IsFree ? "free" : "")">
+                                @if (course.IsFree)
+                                {
+                                    <span>FREE</span>
+                                }
+                                else
+                                {
+                                    <span>$@course.Price.ToString("F2")</span>
+                                }
+                            </div>
+                        </div>
+                        
+                        <div class="course-stats mb-3">
+                            <small class="text-muted">
+                                <i class="fas fa-users"></i> @course.TotalEnrollments students
+                                <span class="mx-2">•</span>
+                                <i class="fas fa-play-circle"></i> @course.Lessons.Count lessons
+                                <span class="mx-2">•</span>
+                                <i class="fas fa-eye"></i> @course.ViewCount views
+                            </small>
+                        </div>
+                        
+                        <div class="d-grid">
+                            <a href="/student/course/@course.Id" class="btn btn-primary">
+                                <i class="fas fa-eye"></i> View Course
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+        
+        @if (!Model.Any())
+        {
+            <div class="text-center py-5">
+                <div class="mb-4">
+                    <i class="fas fa-search fa-4x text-muted"></i>
+                </div>
+                <h4 class="text-muted">No courses found</h4>
+                <p class="text-muted">Try adjusting your search criteria or browse all courses.</p>
+                <a href="/student/courses" class="btn btn-primary">
+                    <i class="fas fa-refresh"></i> Show All Courses
+                </a>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/course-system.js"></script>
+    <script>
+        // Additional filtering functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const clearFiltersBtn = document.getElementById('clearFilters');
+            const gridViewBtn = document.getElementById('gridView');
+            const listViewBtn = document.getElementById('listView');
+            const coursesContainer = document.getElementById('coursesContainer');
+            
+            // Clear filters
+            clearFiltersBtn.addEventListener('click', function() {
+                document.getElementById('courseSearch').value = '';
+                document.getElementById('categoryFilter').value = '';
+                document.getElementById('priceFilter').value = '';
+                document.getElementById('sortFilter').value = 'newest';
+                
+                // Trigger filter update
+                const event = new Event('input');
+                document.getElementById('courseSearch').dispatchEvent(event);
+            });
+            
+            // View toggle
+            gridViewBtn.addEventListener('click', function() {
+                coursesContainer.className = 'courses-grid';
+                gridViewBtn.classList.add('active');
+                listViewBtn.classList.remove('active');
+            });
+            
+            listViewBtn.addEventListener('click', function() {
+                coursesContainer.className = 'courses-list';
+                listViewBtn.classList.add('active');
+                gridViewBtn.classList.remove('active');
+            });
+        });
+    </script>
+}

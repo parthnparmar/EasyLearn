@@ -1,0 +1,124 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - EasyLearn</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/modern-ui.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/course-system.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/student-learning.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/modern-aesthetic.css" asp-append-version="true" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body class="fade-in" style="opacity: 0;">
+    <header>
+        <nav class="navbar navbar-expand-lg navbar-modern fixed-top">
+            <div class="container">
+                <a class="navbar-brand pulse" asp-controller="Home" asp-action="Index">
+                    <i class="fas fa-graduation-cap"></i> EasyLearn
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav me-auto">
+                        <li class="nav-item">
+                            <a class="nav-link" asp-controller="Home" asp-action="Index"><i class="fas fa-home"></i> Home</a>
+                        </li>
+                        @if (User.IsInRole("Admin"))
+                        {
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                    <i class="fas fa-cog"></i> Admin
+                                </a>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="/admin/dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item" href="/admin/users"><i class="fas fa-users"></i> Manage Users</a></li>
+                                    <li><a class="dropdown-item" href="/admin/courses/approval"><i class="fas fa-check-circle"></i> Course Approvals</a></li>
+                                    <li><a class="dropdown-item" href="/admin/categories"><i class="fas fa-tags"></i> Categories</a></li>
+                                    <li><a class="dropdown-item" href="/admin/announcements"><i class="fas fa-bullhorn"></i> Announcements</a></li>
+                                </ul>
+                            </li>
+                        }
+                        @if (User.IsInRole("Instructor"))
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link" href="/instructor/dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="/instructor/my-courses"><i class="fas fa-book"></i> My Courses</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="/instructor/create-course"><i class="fas fa-plus"></i> Create Course</a>
+                            </li>
+                        }
+                        @if (User.IsInRole("Student"))
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link" href="/student/dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="/student/browse-courses"><i class="fas fa-search"></i> Browse Courses</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="/student/my-courses"><i class="fas fa-graduation-cap"></i> My Courses</a>
+                            </li>
+                        }
+                    </ul>
+                    <ul class="navbar-nav">
+                        @if (User.Identity?.IsAuthenticated == true)
+                        {
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                    <i class="fas fa-user"></i> @User.Identity.Name
+                                </a>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" asp-controller="Profile" asp-action="Edit"><i class="fas fa-user-edit"></i> Edit Profile</a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item" asp-controller="Account" asp-action="Logout"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+                                </ul>
+                            </li>
+                        }
+                        else
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Account" asp-action="Login"><i class="fas fa-sign-in-alt"></i> Login</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Account" asp-action="Register"><i class="fas fa-user-plus"></i> Register</a>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </header>
+    <main role="main" class="pb-3 slide-in" style="margin-top: 76px;">
+        @RenderBody()
+    </main>
+    <footer class="border-top footer text-muted bg-light mt-5 modern-footer">
+        <div class="container py-4">
+            <div class="row">
+                <div class="col-md-6">
+                    <p class="mb-0">&copy; 2025 EasyLearn - Online Learning Platform, parthparmar. All rights reserved.</p>
+                </div>
+                <div class="col-md-6 text-end">
+                    <a href="#" class="text-muted me-3"><i class="fab fa-facebook"></i></a>
+                    <a href="#" class="text-muted me-3"><i class="fab fa-twitter"></i></a>
+                    <a href="#" class="text-muted"><i class="fab fa-linkedin"></i></a>
+                </div>
+            </div>
+        </div>
+    </footer>
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="~/js/modern-ui.js" asp-append-version="true"></script>
+    <script src="~/js/modern-aesthetic.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

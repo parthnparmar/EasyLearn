@@ -1,0 +1,411 @@
+@model List<EasyLearn.Models.Course>
+@{
+    ViewData["Title"] = "Course Approvals";
+}
+
+<div class="container-fluid fade-in">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="fas fa-check-circle text-primary"></i> Course Approvals
+        </h1>
+        <div class="btn-group" role="group">
+            <button class="btn btn-modern btn-success" onclick="approveAll()">
+                <i class="fas fa-check-double"></i> Approve All
+            </button>
+            <button class="btn btn-modern btn-outline-secondary" onclick="refreshList()">
+                <i class="fas fa-sync"></i> Refresh
+            </button>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-xl-4 col-md-6 mb-4">
+            <div class="modern-card gradient-warning stats-card h-100">
+                <div class="stats-number">@Model.Count</div>
+                <div class="stats-label">
+                    <i class="fas fa-clock"></i> Pending Approval
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-4 col-md-6 mb-4">
+            <div class="modern-card gradient-info stats-card h-100">
+                <div class="stats-number">@Model.Count(c => c.CreatedAt >= DateTime.Today.AddDays(-7))</div>
+                <div class="stats-label">
+                    <i class="fas fa-calendar-week"></i> This Week
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-4 col-md-6 mb-4">
+            <div class="modern-card gradient-primary stats-card h-100">
+                <div class="stats-number">@Model.GroupBy(c => c.CategoryId).Count()</div>
+                <div class="stats-label">
+                    <i class="fas fa-tags"></i> Categories
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (Model.Any())
+    {
+        <!-- Courses Grid -->
+        <div class="row">
+            @foreach (var course in Model)
+            {
+                <div class="col-lg-6 col-xl-4 mb-4">
+                    <div class="course-approval-card modern-card">
+                        <div class="course-image position-relative">
+                            @if (!string.IsNullOrEmpty(course.ImageUrl))
+                            {
+                                <img src="@course.ImageUrl" alt="@course.Title" class="w-100" style="height: 200px; object-fit: cover;">
+                            }
+                            else
+                            {
+                                <div class="d-flex align-items-center justify-content-center bg-primary text-white" style="height: 200px;">
+                                    <i class="fas fa-book fa-3x"></i>
+                                </div>
+                            }
+                            
+                            <!-- Course Price Badge -->
+                            <div class="position-absolute top-0 end-0 m-3">
+                                <span class="badge bg-@(course.Price == 0 ? "success" : "warning") fs-6">
+                                    @(course.Price == 0 ? "Free" : course.Price.ToString("C"))
+                                </span>
+                            </div>
+
+                            <!-- Days Pending Badge -->
+                            <div class="position-absolute top-0 start-0 m-3">
+                                <span class="badge bg-info">
+                                    @((DateTime.Now - course.CreatedAt).Days) days pending
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <div class="card-body">
+                            <h5 class="card-title">@course.Title</h5>
+                            <p class="card-text text-muted">@course.Description.Substring(0, Math.Min(120, course.Description.Length))...</p>
+                            
+                            <div class="row text-center mb-3">
+                                <div class="col-4">
+                                    <small class="text-muted">Instructor</small><br>
+                                    <strong class="small">@course.Instructor.FirstName @course.Instructor.LastName</strong>
+                                </div>
+                                <div class="col-4">
+                                    <small class="text-muted">Category</small><br>
+                                    <span class="badge bg-secondary">@course.Category.Name</span>
+                                </div>
+                                <div class="col-4">
+                                    <small class="text-muted">Submitted</small><br>
+                                    <strong class="small">@course.CreatedAt.ToString("MMM dd")</strong>
+                                </div>
+                            </div>
+
+                            <div class="d-grid gap-2">
+                                <button class="btn btn-modern btn-outline-info btn-sm" onclick="previewCourse(@course.Id)">
+                                    <i class="fas fa-eye"></i> Preview Course
+                                </button>
+                                <div class="btn-group" role="group">
+                                    <button class="btn btn-modern btn-success btn-sm" onclick="approveCourse(@course.Id)">
+                                        <i class="fas fa-check"></i> Approve
+                                    </button>
+                                    <button class="btn btn-modern btn-danger btn-sm" onclick="rejectCourse(@course.Id)">
+                                        <i class="fas fa-times"></i> Reject
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <!-- Empty State -->
+        <div class="row">
+            <div class="col-12">
+                <div class="modern-card">
+                    <div class="card-body text-center py-5">
+                        <i class="fas fa-check-circle fa-5x text-success mb-4"></i>
+                        <h3>All Caught Up!</h3>
+                        <p class="text-muted mb-4">No courses pending approval at the moment.</p>
+                        <a href="/admin/dashboard" class="btn btn-modern btn-primary">
+                            <i class="fas fa-arrow-left"></i> Back to Dashboard
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<!-- Course Preview Modal -->
+<div class="modal fade modal-modern" id="coursePreviewModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-eye"></i> Course Preview</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="coursePreviewContent">
+                <!-- Content will be loaded dynamically -->
+                <div class="text-center py-4">
+                    <div class="loading-spinner"></div>
+                    <p class="mt-2">Loading course preview...</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-modern btn-success" id="approveFromPreview">
+                    <i class="fas fa-check"></i> Approve Course
+                </button>
+                <button type="button" class="btn btn-modern btn-danger" id="rejectFromPreview">
+                    <i class="fas fa-times"></i> Reject Course
+                </button>
+                <button type="button" class="btn btn-modern btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Rejection Reason Modal -->
+<div class="modal fade modal-modern" id="rejectionModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-times-circle"></i> Reject Course</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Reason for Rejection</label>
+                    <select class="form-select" id="rejectionReason">
+                        <option value="">Select a reason...</option>
+                        <option value="content-quality">Poor Content Quality</option>
+                        <option value="inappropriate">Inappropriate Content</option>
+                        <option value="incomplete">Incomplete Course</option>
+                        <option value="copyright">Copyright Issues</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Additional Comments</label>
+                    <textarea class="form-control" id="rejectionComments" rows="4" placeholder="Provide specific feedback to help the instructor improve..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-modern btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-modern btn-danger" onclick="confirmRejection()">
+                    <i class="fas fa-times"></i> Reject Course
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let currentCourseId = null;
+
+        function previewCourse(courseId) {
+            currentCourseId = courseId;
+            $('#coursePreviewModal').modal('show');
+            
+            // Simulate loading course preview
+            setTimeout(() => {
+                $('#coursePreviewContent').html(`
+                    <div class="row">
+                        <div class="col-md-8">
+                            <h4>JavaScript Fundamentals</h4>
+                            <p class="text-muted">Learn the basics of JavaScript programming language</p>
+                            
+                            <div class="mb-4">
+                                <h6>Course Description</h6>
+                                <p>This comprehensive course covers all the fundamental concepts of JavaScript programming. Students will learn variables, functions, objects, and modern ES6+ features.</p>
+                            </div>
+
+                            <div class="mb-4">
+                                <h6>Course Content</h6>
+                                <div class="list-group">
+                                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <strong>Introduction to JavaScript</strong><br>
+                                            <small class="text-muted">15 minutes • Video</small>
+                                        </div>
+                                        <i class="fas fa-play text-primary"></i>
+                                    </div>
+                                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <strong>Variables and Data Types</strong><br>
+                                            <small class="text-muted">20 minutes • Video</small>
+                                        </div>
+                                        <i class="fas fa-play text-primary"></i>
+                                    </div>
+                                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <strong>Functions and Scope</strong><br>
+                                            <small class="text-muted">25 minutes • Video</small>
+                                        </div>
+                                        <i class="fas fa-play text-primary"></i>
+                                    </div>
+                                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <strong>Quiz: JavaScript Basics</strong><br>
+                                            <small class="text-muted">10 questions</small>
+                                        </div>
+                                        <i class="fas fa-question-circle text-info"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="modern-card">
+                                <div class="card-body">
+                                    <h6>Course Details</h6>
+                                    <p><strong>Instructor:</strong> John Doe</p>
+                                    <p><strong>Category:</strong> Programming</p>
+                                    <p><strong>Price:</strong> Free</p>
+                                    <p><strong>Duration:</strong> 2 hours</p>
+                                    <p><strong>Lessons:</strong> 8 lessons</p>
+                                    <p><strong>Quizzes:</strong> 2 quizzes</p>
+                                    <p><strong>Submitted:</strong> 3 days ago</p>
+                                </div>
+                            </div>
+                            
+                            <div class="modern-card mt-3">
+                                <div class="card-body">
+                                    <h6>Quality Checklist</h6>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" checked>
+                                        <label class="form-check-label">Clear course objectives</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" checked>
+                                        <label class="form-check-label">Good video quality</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" checked>
+                                        <label class="form-check-label">Appropriate content</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox">
+                                        <label class="form-check-label">Complete course materials</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `);
+            }, 1000);
+        }
+
+        function approveCourse(courseId) {
+            if (confirm('Are you sure you want to approve this course?')) {
+                fetch(`/admin/courses/approve/${courseId}`, {
+                    method: 'POST',
+                    headers: {
+                        'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                    }
+                }).then(() => {
+                    showNotification('Course approved successfully!', 'success');
+                    setTimeout(() => location.reload(), 1500);
+                });
+            }
+        }
+
+        function rejectCourse(courseId) {
+            currentCourseId = courseId;
+            $('#rejectionModal').modal('show');
+        }
+
+        function confirmRejection() {
+            const reason = $('#rejectionReason').val();
+            const comments = $('#rejectionComments').val();
+            
+            if (!reason) {
+                showNotification('Please select a reason for rejection!', 'warning');
+                return;
+            }
+
+            fetch(`/admin/courses/reject/${currentCourseId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                },
+                body: JSON.stringify({ reason, comments })
+            }).then(() => {
+                $('#rejectionModal').modal('hide');
+                showNotification('Course rejected successfully!', 'warning');
+                setTimeout(() => location.reload(), 1500);
+            });
+        }
+
+        function approveAll() {
+            if (confirm('Are you sure you want to approve all pending courses?')) {
+                showNotification('Bulk approval feature coming soon!', 'info');
+            }
+        }
+
+        function refreshList() {
+            location.reload();
+        }
+
+        function showNotification(message, type) {
+            const notification = $(`
+                <div class="notification ${type}">
+                    <i class="fas fa-${type === 'success' ? 'check' : type === 'warning' ? 'exclamation' : 'info'}-circle me-2"></i>
+                    ${message}
+                </div>
+            `);
+            
+            $('body').append(notification);
+            setTimeout(() => notification.addClass('show'), 100);
+            setTimeout(() => {
+                notification.removeClass('show');
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+
+        // Modal event handlers
+        $('#approveFromPreview').click(function() {
+            if (currentCourseId) {
+                $('#coursePreviewModal').modal('hide');
+                approveCourse(currentCourseId);
+            }
+        });
+
+        $('#rejectFromPreview').click(function() {
+            if (currentCourseId) {
+                $('#coursePreviewModal').modal('hide');
+                rejectCourse(currentCourseId);
+            }
+        });
+
+        // Initialize animations
+        $(document).ready(function() {
+            // Animate stats
+            $('.stats-number').each(function() {
+                const $this = $(this);
+                const countTo = parseInt($this.text());
+                
+                $({ countNum: 0 }).animate({
+                    countNum: countTo
+                }, {
+                    duration: 2000,
+                    easing: 'swing',
+                    step: function() {
+                        $this.text(Math.floor(this.countNum));
+                    },
+                    complete: function() {
+                        $this.text(countTo);
+                    }
+                });
+            });
+
+            // Stagger card animations
+            $('.course-approval-card').each(function(index) {
+                $(this).css('animation-delay', (index * 0.1) + 's');
+            });
+        });
+    </script>
+}

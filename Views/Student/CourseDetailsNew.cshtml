@@ -1,0 +1,376 @@
+@model EasyLearn.Models.ViewModels.CourseDetailsViewModel
+@{
+    ViewData["Title"] = Model.Course.Title;
+}
+
+<link rel="stylesheet" href="~/css/course-system.css" />
+
+<!-- Course Hero Section -->
+<div class="course-hero">
+    <div class="container">
+        <div class="course-hero-content">
+            <div class="course-hero-info">
+                <div class="mb-3">
+                    <span class="badge bg-light text-dark me-2">@Model.Course.Category.Name</span>
+                    @if (Model.Course.IsFeatured)
+                    {
+                        <span class="badge bg-warning text-dark">
+                            <i class="fas fa-star"></i> Featured
+                        </span>
+                    }
+                </div>
+                
+                <h1>@Model.Course.Title</h1>
+                <p>@Model.Course.Description</p>
+                
+                <div class="course-meta-info">
+                    <div class="meta-item">
+                        <i class="fas fa-user"></i>
+                        <span>@Model.Course.Instructor.FirstName @Model.Course.Instructor.LastName</span>
+                    </div>
+                    <div class="meta-item">
+                        <i class="fas fa-users"></i>
+                        <span>@Model.Course.TotalEnrollments students</span>
+                    </div>
+                    <div class="meta-item">
+                        <i class="fas fa-play-circle"></i>
+                        <span>@Model.Lessons.Count lessons</span>
+                    </div>
+                    <div class="meta-item">
+                        <i class="fas fa-clock"></i>
+                        <span>@TimeSpan.FromMinutes(Model.Lessons.Sum(l => l.Duration.TotalMinutes)).ToString(@"hh\:mm") total</span>
+                    </div>
+                </div>
+                
+                <div class="course-rating mb-3">
+                    @for (int i = 1; i <= 5; i++)
+                    {
+                        @if (i <= Model.Course.AverageRating)
+                        {
+                            <i class="fas fa-star text-warning"></i>
+                        }
+                        else
+                        {
+                            <i class="far fa-star text-warning"></i>
+                        }
+                    }
+                    <span class="ms-2">@Model.Course.AverageRating.ToString("F1") (@Model.Reviews.Count reviews)</span>
+                </div>
+            </div>
+            
+            <div class="course-hero-card">
+                @if (!string.IsNullOrEmpty(Model.Course.PreviewVideoUrl))
+                {
+                    <div class="video-preview mb-3">
+                        <div class="video-wrapper">
+                            <iframe src="@Model.Course.PreviewVideoUrl" allowfullscreen></iframe>
+                        </div>
+                    </div>
+                }
+                else if (!string.IsNullOrEmpty(Model.Course.ThumbnailUrl))
+                {
+                    <img src="@Model.Course.ThumbnailUrl" alt="@Model.Course.Title" class="img-fluid rounded mb-3">
+                }
+                
+                <div class="hero-card-price @(Model.Course.IsFree ? "free" : "")">
+                    @if (Model.Course.IsFree)
+                    {
+                        <span>FREE</span>
+                    }
+                    else
+                    {
+                        <span>$@Model.Course.Price.ToString("F2")</span>
+                    }
+                </div>
+                
+                @if (Model.IsEnrolled)
+                {
+                    <a href="/student/watch/@Model.Lessons.FirstOrDefault()?.Id" class="enroll-btn">
+                        <i class="fas fa-play"></i> Continue Learning
+                    </a>
+                    
+                    @if (Model.ProgressPercentage > 0)
+                    {
+                        <div class="progress mt-3">
+                            <div class="progress-bar bg-success" style="width: @Model.ProgressPercentage%"></div>
+                        </div>
+                        <small class="text-muted">@Model.ProgressPercentage.ToString("F0")% Complete</small>
+                    }
+                }
+                else if (Model.CanEnroll)
+                {
+                    <form method="post" action="/student/enroll-course">
+                        <input type="hidden" name="courseId" value="@Model.Course.Id" />
+                        <button type="submit" class="enroll-btn">
+                            <i class="fas fa-graduation-cap"></i> Enroll Now
+                        </button>
+                    </form>
+                }
+                else
+                {
+                    <button class="enroll-btn" disabled>
+                        <i class="fas fa-lock"></i> Already Enrolled
+                    </button>
+                }
+                
+                <div class="mt-3">
+                    <small class="text-muted">
+                        <i class="fas fa-shield-alt"></i> 30-day money-back guarantee<br>
+                        <i class="fas fa-mobile-alt"></i> Access on mobile and desktop<br>
+                        <i class="fas fa-certificate"></i> Certificate of completion
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container py-4">
+    <!-- Course Content Tabs -->
+    <div class="course-tabs">
+        <ul class="nav nav-tabs" id="courseTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview" type="button" role="tab">
+                    <i class="fas fa-info-circle"></i> Overview
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="curriculum-tab" data-bs-toggle="tab" data-bs-target="#curriculum" type="button" role="tab">
+                    <i class="fas fa-list"></i> Curriculum
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="instructor-tab" data-bs-toggle="tab" data-bs-target="#instructor" type="button" role="tab">
+                    <i class="fas fa-user"></i> Instructor
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="reviews-tab" data-bs-toggle="tab" data-bs-target="#reviews" type="button" role="tab">
+                    <i class="fas fa-star"></i> Reviews (@Model.Reviews.Count)
+                </button>
+            </li>
+        </ul>
+        
+        <div class="tab-content" id="courseTabsContent">
+            <!-- Overview Tab -->
+            <div class="tab-pane fade show active" id="overview" role="tabpanel">
+                <div class="row">
+                    <div class="col-lg-8">
+                        <h4>What you'll learn</h4>
+                        <div class="learning-objectives mb-4">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <ul class="list-unstyled">
+                                        <li><i class="fas fa-check text-success me-2"></i> Master the fundamentals</li>
+                                        <li><i class="fas fa-check text-success me-2"></i> Build real-world projects</li>
+                                        <li><i class="fas fa-check text-success me-2"></i> Industry best practices</li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-6">
+                                    <ul class="list-unstyled">
+                                        <li><i class="fas fa-check text-success me-2"></i> Advanced techniques</li>
+                                        <li><i class="fas fa-check text-success me-2"></i> Problem-solving skills</li>
+                                        <li><i class="fas fa-check text-success me-2"></i> Career advancement</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <h4>Course Description</h4>
+                        <p>@Model.Course.Description</p>
+                        
+                        <h4>Requirements</h4>
+                        <ul>
+                            <li>Basic computer skills</li>
+                            <li>Internet connection</li>
+                            <li>Willingness to learn</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="col-lg-4">
+                        <div class="course-stats-card">
+                            <h5>Course Statistics</h5>
+                            <div class="stat-item">
+                                <i class="fas fa-users text-primary"></i>
+                                <span>@Model.Course.TotalEnrollments students enrolled</span>
+                            </div>
+                            <div class="stat-item">
+                                <i class="fas fa-star text-warning"></i>
+                                <span>@Model.Course.AverageRating.ToString("F1") average rating</span>
+                            </div>
+                            <div class="stat-item">
+                                <i class="fas fa-calendar text-info"></i>
+                                <span>Created @Model.Course.CreatedAt.ToString("MMMM yyyy")</span>
+                            </div>
+                            <div class="stat-item">
+                                <i class="fas fa-globe text-success"></i>
+                                <span>English language</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Curriculum Tab -->
+            <div class="tab-pane fade" id="curriculum" role="tabpanel">
+                <div class="lesson-playlist">
+                    <div class="playlist-header">
+                        <i class="fas fa-play-circle me-2"></i>
+                        Course Content (@Model.Lessons.Count lessons)
+                    </div>
+                    
+                    @foreach (var lesson in Model.Lessons.OrderBy(l => l.OrderIndex))
+                    {
+                        <div class="lesson-item" data-lesson-id="@lesson.Id" data-video-url="@lesson.VideoUrl">
+                            <div class="lesson-number">@lesson.OrderIndex</div>
+                            <div class="lesson-content">
+                                <div class="lesson-title">@lesson.Title</div>
+                                <div class="lesson-duration">
+                                    <i class="fas fa-clock"></i> @lesson.Duration.ToString(@"mm\:ss")
+                                    @if (!string.IsNullOrEmpty(lesson.MaterialUrl))
+                                    {
+                                        <span class="ms-2"><i class="fas fa-file-download"></i> Materials</span>
+                                    }
+                                </div>
+                            </div>
+                            @if (Model.IsEnrolled)
+                            {
+                                <div class="lesson-status">
+                                    <i class="fas fa-play"></i>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="lesson-status">
+                                    <i class="fas fa-lock text-muted"></i>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+            
+            <!-- Instructor Tab -->
+            <div class="tab-pane fade" id="instructor" role="tabpanel">
+                <div class="instructor-profile">
+                    <div class="row">
+                        <div class="col-md-3 text-center">
+                            <div class="instructor-avatar-large">
+                                @Model.Course.Instructor.FirstName.Substring(0, 1)@Model.Course.Instructor.LastName.Substring(0, 1)
+                            </div>
+                        </div>
+                        <div class="col-md-9">
+                            <h4>@Model.Course.Instructor.FirstName @Model.Course.Instructor.LastName</h4>
+                            <p class="text-muted">Course Instructor</p>
+                            
+                            <div class="instructor-stats mb-3">
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="stat-item">
+                                            <i class="fas fa-graduation-cap text-primary"></i>
+                                            <span>Expert Instructor</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="stat-item">
+                                            <i class="fas fa-users text-success"></i>
+                                            <span>1000+ Students</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="stat-item">
+                                            <i class="fas fa-star text-warning"></i>
+                                            <span>4.8 Rating</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <p>Experienced instructor with years of industry experience. Passionate about teaching and helping students achieve their goals.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Reviews Tab -->
+            <div class="tab-pane fade" id="reviews" role="tabpanel">
+                @if (Model.Reviews.Any())
+                {
+                    @foreach (var review in Model.Reviews.Take(10))
+                    {
+                        <div class="review-card">
+                            <div class="review-header">
+                                <div class="reviewer-info">
+                                    <div class="reviewer-avatar">
+                                        @review.Student.FirstName.Substring(0, 1)@review.Student.LastName.Substring(0, 1)
+                                    </div>
+                                    <div>
+                                        <div class="reviewer-name">@review.Student.FirstName @review.Student.LastName</div>
+                                        <div class="review-date">@review.CreatedAt.ToString("MMM dd, yyyy")</div>
+                                    </div>
+                                </div>
+                                <div class="review-rating">
+                                    @for (int i = 1; i <= 5; i++)
+                                    {
+                                        @if (i <= review.Rating)
+                                        {
+                                            <i class="fas fa-star"></i>
+                                        }
+                                        else
+                                        {
+                                            <i class="far fa-star"></i>
+                                        }
+                                    }
+                                </div>
+                            </div>
+                            <p>@review.Comment</p>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="text-center py-4">
+                        <i class="fas fa-star fa-3x text-muted mb-3"></i>
+                        <h5>No reviews yet</h5>
+                        <p class="text-muted">Be the first to review this course!</p>
+                    </div>
+                }
+                
+                @if (Model.CanReview)
+                {
+                    <div class="review-form mt-4">
+                        <h5>Leave a Review</h5>
+                        <form method="post" action="/student/add-review">
+                            <input type="hidden" name="CourseId" value="@Model.Course.Id" />
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Rating</label>
+                                <div class="rating-input" data-rating="0">
+                                    <span class="rating-star" data-value="1"><i class="far fa-star"></i></span>
+                                    <span class="rating-star" data-value="2"><i class="far fa-star"></i></span>
+                                    <span class="rating-star" data-value="3"><i class="far fa-star"></i></span>
+                                    <span class="rating-star" data-value="4"><i class="far fa-star"></i></span>
+                                    <span class="rating-star" data-value="5"><i class="far fa-star"></i></span>
+                                    <input type="hidden" name="Rating" value="0" />
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="comment" class="form-label">Comment</label>
+                                <textarea class="form-control" id="comment" name="Comment" rows="4" placeholder="Share your experience with this course..."></textarea>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-paper-plane"></i> Submit Review
+                            </button>
+                        </form>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/course-system.js"></script>
+}

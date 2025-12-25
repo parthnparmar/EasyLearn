@@ -1,0 +1,484 @@
+@model EasyLearn.Models.ViewModels.CourseCreateViewModel
+@{
+    ViewData["Title"] = "Create New Course";
+    Layout = "_Layout";
+}
+
+<link href="~/css/course-creation.css" rel="stylesheet" />
+
+<div class="course-creation-container">
+    <div class="container-fluid">
+        <!-- Header -->
+        <div class="creation-header">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 class="creation-title">
+                        <i class="fas fa-plus-circle"></i>
+                        Create New Course
+                    </h1>
+                    <p class="creation-subtitle">Share your knowledge and expertise with students worldwide</p>
+                </div>
+                <div class="col-md-4 text-end">
+                    <button class="btn btn-outline-secondary" onclick="saveDraft()">
+                        <i class="fas fa-save"></i>
+                        Save Draft
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Progress Steps -->
+        <div class="progress-steps">
+            <div class="step active" data-step="1">
+                <div class="step-number">1</div>
+                <div class="step-label">Basic Info</div>
+            </div>
+            <div class="step" data-step="2">
+                <div class="step-number">2</div>
+                <div class="step-label">Content</div>
+            </div>
+            <div class="step" data-step="3">
+                <div class="step-number">3</div>
+                <div class="step-label">Pricing</div>
+            </div>
+            <div class="step" data-step="4">
+                <div class="step-number">4</div>
+                <div class="step-label">Review</div>
+            </div>
+        </div>
+
+        <!-- Form Container -->
+        <div class="form-container">
+            <form asp-action="CreateCourse" method="post" id="courseForm" enctype="multipart/form-data">
+                
+                <!-- Step 1: Basic Information -->
+                <div class="form-step active" id="step1">
+                    <div class="step-card">
+                        <div class="step-header">
+                            <h3><i class="fas fa-info-circle"></i> Basic Information</h3>
+                            <p>Let's start with the fundamentals of your course</p>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-lg-8">
+                                <div class="form-group">
+                                    <label asp-for="Title" class="form-label">Course Title *</label>
+                                    <input asp-for="Title" class="form-control form-control-modern" 
+                                           placeholder="Enter an engaging course title" 
+                                           maxlength="200" required>
+                                    <div class="form-help">
+                                        <small class="text-muted">Make it clear and compelling (max 200 characters)</small>
+                                        <span class="char-count">0/200</span>
+                                    </div>
+                                    <span asp-validation-for="Title" class="text-danger"></span>
+                                </div>
+
+                                <div class="form-group">
+                                    <label asp-for="Description" class="form-label">Course Description *</label>
+                                    <textarea asp-for="Description" class="form-control form-control-modern" 
+                                              rows="5" placeholder="Describe what students will learn in this course"
+                                              maxlength="1000" required></textarea>
+                                    <div class="form-help">
+                                        <small class="text-muted">Detailed description helps students understand the value (max 1000 characters)</small>
+                                        <span class="char-count">0/1000</span>
+                                    </div>
+                                    <span asp-validation-for="Description" class="text-danger"></span>
+                                </div>
+
+                                <div class="form-group">
+                                    <label asp-for="CategoryId" class="form-label">Category *</label>
+                                    <select asp-for="CategoryId" class="form-select form-control-modern" required>
+                                        <option value="">Select a category</option>
+                                        @foreach (var category in (ViewBag.Categories as List<EasyLearn.Models.Category>) ?? new List<EasyLearn.Models.Category>())
+                                        {
+                                            <option value="@category.Id">@category.Name</option>
+                                        }
+                                    </select>
+                                    <span asp-validation-for="CategoryId" class="text-danger"></span>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label">Learning Objectives</label>
+                                    <div class="objectives-container">
+                                        <div class="objective-item">
+                                            <input type="text" class="form-control form-control-modern" 
+                                                   placeholder="What will students learn? (e.g., Build responsive websites)">
+                                            <button type="button" class="btn btn-outline-danger btn-sm remove-objective">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <button type="button" class="btn btn-outline-primary btn-sm" onclick="addObjective()">
+                                        <i class="fas fa-plus"></i> Add Learning Objective
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="col-lg-4">
+                                <div class="upload-section">
+                                    <h5>Course Thumbnail</h5>
+                                    <div class="thumbnail-upload">
+                                        <div class="upload-placeholder" id="thumbnailPreview">
+                                            <i class="fas fa-image"></i>
+                                            <p>Upload Course Image</p>
+                                            <small>Recommended: 1280x720px</small>
+                                        </div>
+                                        <input type="file" id="thumbnailInput" accept="image/*" style="display: none;">
+                                        <input asp-for="ImageUrl" type="hidden" id="imageUrlInput">
+                                        <button type="button" class="btn btn-primary btn-upload" onclick="document.getElementById('thumbnailInput').click()">
+                                            <i class="fas fa-upload"></i> Choose Image
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="preview-section">
+                                    <h5>Course Preview</h5>
+                                    <div class="course-preview-card">
+                                        <div class="preview-image">
+                                            <i class="fas fa-play-circle"></i>
+                                        </div>
+                                        <div class="preview-content">
+                                            <h6 class="preview-title">Your Course Title</h6>
+                                            <p class="preview-description">Course description will appear here...</p>
+                                            <div class="preview-meta">
+                                                <span class="preview-category">Category</span>
+                                                <span class="preview-price">Free</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 2: Content -->
+                <div class="form-step" id="step2">
+                    <div class="step-card">
+                        <div class="step-header">
+                            <h3><i class="fas fa-video"></i> Course Content</h3>
+                            <p>Add lessons, videos, and materials to your course</p>
+                        </div>
+
+                        <div class="content-tabs">
+                            <ul class="nav nav-tabs" role="tablist">
+                                <li class="nav-item">
+                                    <a class="nav-link active" data-bs-toggle="tab" href="#lessons-tab">
+                                        <i class="fas fa-play"></i> Lessons
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" data-bs-toggle="tab" href="#materials-tab">
+                                        <i class="fas fa-file-pdf"></i> Materials
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" data-bs-toggle="tab" href="#quizzes-tab">
+                                        <i class="fas fa-question-circle"></i> Quizzes
+                                    </a>
+                                </li>
+                            </ul>
+
+                            <div class="tab-content">
+                                <!-- Lessons Tab -->
+                                <div class="tab-pane fade show active" id="lessons-tab">
+                                    <div class="lessons-container">
+                                        <div class="lesson-item">
+                                            <div class="lesson-header">
+                                                <span class="lesson-number">1</span>
+                                                <input type="text" class="form-control lesson-title" placeholder="Lesson Title">
+                                                <button type="button" class="btn btn-outline-danger btn-sm">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                            <div class="lesson-content">
+                                                <div class="row">
+                                                    <div class="col-md-6">
+                                                        <label class="form-label">YouTube Video URL</label>
+                                                        <input type="url" class="form-control" placeholder="https://www.youtube.com/watch?v=...">
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <label class="form-label">Duration (minutes)</label>
+                                                        <input type="number" class="form-control" placeholder="15" min="1">
+                                                    </div>
+                                                </div>
+                                                <div class="mt-3">
+                                                    <label class="form-label">Lesson Description</label>
+                                                    <textarea class="form-control" rows="3" placeholder="What will students learn in this lesson?"></textarea>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <button type="button" class="btn btn-primary" onclick="addLesson()">
+                                        <i class="fas fa-plus"></i> Add Lesson
+                                    </button>
+                                </div>
+
+                                <!-- Materials Tab -->
+                                <div class="tab-pane fade" id="materials-tab">
+                                    <div class="materials-upload">
+                                        <div class="upload-zone">
+                                            <i class="fas fa-cloud-upload-alt"></i>
+                                            <h5>Upload Study Materials</h5>
+                                            <p>Drag and drop PDF, DOC, or PPT files here</p>
+                                            <input type="file" id="materialsInput" multiple accept=".pdf,.doc,.docx,.ppt,.pptx" style="display: none;">
+                                            <button type="button" class="btn btn-primary" onclick="document.getElementById('materialsInput').click()">
+                                                <i class="fas fa-upload"></i> Browse Files
+                                            </button>
+                                        </div>
+                                        <div class="materials-list"></div>
+                                    </div>
+                                </div>
+
+                                <!-- Quizzes Tab -->
+                                <div class="tab-pane fade" id="quizzes-tab">
+                                    <div class="quiz-builder">
+                                        <div class="quiz-item">
+                                            <div class="quiz-header">
+                                                <input type="text" class="form-control quiz-title" placeholder="Quiz Title">
+                                                <button type="button" class="btn btn-outline-danger btn-sm">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                            <div class="quiz-settings">
+                                                <div class="row">
+                                                    <div class="col-md-4">
+                                                        <label class="form-label">Time Limit (minutes)</label>
+                                                        <input type="number" class="form-control" placeholder="30" min="1">
+                                                    </div>
+                                                    <div class="col-md-4">
+                                                        <label class="form-label">Passing Score (%)</label>
+                                                        <input type="number" class="form-control" placeholder="70" min="1" max="100">
+                                                    </div>
+                                                    <div class="col-md-4">
+                                                        <label class="form-label">Attempts Allowed</label>
+                                                        <select class="form-select">
+                                                            <option value="1">1 Attempt</option>
+                                                            <option value="3">3 Attempts</option>
+                                                            <option value="-1">Unlimited</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="questions-container">
+                                                <div class="question-item">
+                                                    <div class="question-header">
+                                                        <span class="question-number">Q1</span>
+                                                        <select class="form-select question-type">
+                                                            <option value="multiple-choice">Multiple Choice</option>
+                                                            <option value="true-false">True/False</option>
+                                                        </select>
+                                                        <button type="button" class="btn btn-outline-danger btn-sm">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                    </div>
+                                                    <div class="question-content">
+                                                        <textarea class="form-control question-text" placeholder="Enter your question here..." rows="2"></textarea>
+                                                        <div class="answers-container">
+                                                            <div class="answer-item">
+                                                                <input type="radio" name="correct_answer_1" value="0">
+                                                                <input type="text" class="form-control answer-text" placeholder="Answer option">
+                                                                <button type="button" class="btn btn-outline-danger btn-sm">
+                                                                    <i class="fas fa-times"></i>
+                                                                </button>
+                                                            </div>
+                                                            <div class="answer-item">
+                                                                <input type="radio" name="correct_answer_1" value="1">
+                                                                <input type="text" class="form-control answer-text" placeholder="Answer option">
+                                                                <button type="button" class="btn btn-outline-danger btn-sm">
+                                                                    <i class="fas fa-times"></i>
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                        <button type="button" class="btn btn-outline-primary btn-sm">
+                                                            <i class="fas fa-plus"></i> Add Answer
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <button type="button" class="btn btn-outline-primary">
+                                                <i class="fas fa-plus"></i> Add Question
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <button type="button" class="btn btn-primary">
+                                        <i class="fas fa-plus"></i> Add Quiz
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 3: Pricing -->
+                <div class="form-step" id="step3">
+                    <div class="step-card">
+                        <div class="step-header">
+                            <h3><i class="fas fa-dollar-sign"></i> Pricing & Settings</h3>
+                            <p>Set your course price and additional settings</p>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-lg-6">
+                                <div class="pricing-options">
+                                    <div class="pricing-card" data-price="free">
+                                        <div class="pricing-header">
+                                            <i class="fas fa-gift"></i>
+                                            <h4>Free Course</h4>
+                                        </div>
+                                        <div class="pricing-body">
+                                            <p>Make your course available to everyone at no cost</p>
+                                            <ul>
+                                                <li>Unlimited enrollments</li>
+                                                <li>Build your audience</li>
+                                                <li>Get reviews and feedback</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+
+                                    <div class="pricing-card" data-price="paid">
+                                        <div class="pricing-header">
+                                            <i class="fas fa-credit-card"></i>
+                                            <h4>Paid Course</h4>
+                                        </div>
+                                        <div class="pricing-body">
+                                            <p>Set a price for your course and earn revenue</p>
+                                            <div class="price-input-group">
+                                                <span class="input-group-text">$</span>
+                                                <input asp-for="Price" type="number" class="form-control" 
+                                                       placeholder="0.00" min="0" step="0.01">
+                                            </div>
+                                            <ul>
+                                                <li>Earn revenue from sales</li>
+                                                <li>Premium course positioning</li>
+                                                <li>Detailed analytics</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="additional-settings">
+                                    <h5>Additional Settings</h5>
+                                    <div class="form-check">
+                                        <input asp-for="IsFeatured" class="form-check-input" type="checkbox">
+                                        <label asp-for="IsFeatured" class="form-check-label">
+                                            Featured Course
+                                            <small class="text-muted d-block">Display this course prominently on the platform</small>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-lg-6">
+                                <div class="pricing-preview">
+                                    <h5>Pricing Preview</h5>
+                                    <div class="preview-card">
+                                        <div class="preview-price">
+                                            <span class="price-amount">Free</span>
+                                            <span class="price-label">Course Price</span>
+                                        </div>
+                                        <div class="earnings-breakdown">
+                                            <div class="breakdown-item">
+                                                <span>Platform Fee (10%)</span>
+                                                <span>$0.00</span>
+                                            </div>
+                                            <div class="breakdown-item">
+                                                <span>Your Earnings</span>
+                                                <span class="earnings-amount">$0.00</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 4: Review -->
+                <div class="form-step" id="step4">
+                    <div class="step-card">
+                        <div class="step-header">
+                            <h3><i class="fas fa-eye"></i> Review & Publish</h3>
+                            <p>Review your course details before publishing</p>
+                        </div>
+
+                        <div class="review-sections">
+                            <div class="review-section">
+                                <h5><i class="fas fa-info-circle"></i> Basic Information</h5>
+                                <div class="review-content">
+                                    <div class="review-item">
+                                        <strong>Title:</strong>
+                                        <span id="reviewTitle">-</span>
+                                    </div>
+                                    <div class="review-item">
+                                        <strong>Category:</strong>
+                                        <span id="reviewCategory">-</span>
+                                    </div>
+                                    <div class="review-item">
+                                        <strong>Description:</strong>
+                                        <span id="reviewDescription">-</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="review-section">
+                                <h5><i class="fas fa-video"></i> Content Summary</h5>
+                                <div class="review-content">
+                                    <div class="review-item">
+                                        <strong>Lessons:</strong>
+                                        <span id="reviewLessons">0</span>
+                                    </div>
+                                    <div class="review-item">
+                                        <strong>Materials:</strong>
+                                        <span id="reviewMaterials">0</span>
+                                    </div>
+                                    <div class="review-item">
+                                        <strong>Quizzes:</strong>
+                                        <span id="reviewQuizzes">0</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="review-section">
+                                <h5><i class="fas fa-dollar-sign"></i> Pricing</h5>
+                                <div class="review-content">
+                                    <div class="review-item">
+                                        <strong>Price:</strong>
+                                        <span id="reviewPrice">Free</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="publish-options">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="agreeTerms" required>
+                                <label class="form-check-label" for="agreeTerms">
+                                    I agree to the <a href="#" target="_blank">Terms of Service</a> and <a href="#" target="_blank">Content Policy</a>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Navigation Buttons -->
+                <div class="form-navigation">
+                    <button type="button" class="btn btn-outline-secondary" id="prevBtn" onclick="changeStep(-1)" style="display: none;">
+                        <i class="fas fa-arrow-left"></i> Previous
+                    </button>
+                    <button type="button" class="btn btn-primary" id="nextBtn" onclick="changeStep(1)">
+                        Next <i class="fas fa-arrow-right"></i>
+                    </button>
+                    <button type="submit" class="btn btn-success" id="submitBtn" style="display: none;">
+                        <i class="fas fa-rocket"></i> Publish Course
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/course-creation.js"></script>
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

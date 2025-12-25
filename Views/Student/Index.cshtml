@@ -1,0 +1,505 @@
+@model EasyLearn.Models.ViewModels.StudentDashboardViewModel
+@{
+    ViewData["Title"] = "Student Dashboard";
+}
+
+<div class="container-fluid">
+    <!-- Profile Completion Reminder -->
+    @if (ViewBag.Profile != null)
+    {
+        <partial name="_ProfileReminder" model="ViewBag.Profile" />
+    }
+    
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2 class="mb-0">Welcome back, @User.Identity?.Name! 👋</h2>
+                    <p class="text-muted mb-0">Continue your learning journey</p>
+                </div>
+                <div>
+                    <a href="@Url.Action("BrowseCourses")" class="btn btn-primary">
+                        <i class="fas fa-search"></i> Discover Courses
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card bg-gradient-primary text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h3 class="mb-0">@Model.TotalCourses</h3>
+                            <p class="mb-0">Enrolled Courses</p>
+                        </div>
+                        <div class="opacity-75">
+                            <i class="fas fa-graduation-cap fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card bg-gradient-success text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h3 class="mb-0">@Model.CompletedCourses</h3>
+                            <p class="mb-0">Completed</p>
+                        </div>
+                        <div class="opacity-75">
+                            <i class="fas fa-trophy fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card bg-gradient-info text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h3 class="mb-0">@Model.Certificates.Count</h3>
+                            <p class="mb-0">Certificates</p>
+                        </div>
+                        <div class="opacity-75">
+                            <i class="fas fa-certificate fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card bg-gradient-warning text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h3 class="mb-0">@((Model.TotalCourses - Model.CompletedCourses))</h3>
+                            <p class="mb-0">In Progress</p>
+                        </div>
+                        <div class="opacity-75">
+                            <i class="fas fa-clock fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Main Content -->
+        <div class="col-lg-8">
+            <!-- Continue Learning -->
+            @if (Model.EnrolledCourses.Any(e => e.CompletedAt == null))
+            {
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-play-circle"></i> Continue Learning</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            @foreach (var enrollment in Model.EnrolledCourses.Where(e => e.CompletedAt == null).Take(3))
+                            {
+                                <div class="col-md-4 mb-3">
+                                    <div class="card h-100 course-progress-card">
+                                        @if (!string.IsNullOrEmpty(enrollment.Course.ImageUrl))
+                                        {
+                                            <img src="@enrollment.Course.ImageUrl" class="card-img-top" alt="@enrollment.Course.Title" style="height: 150px; object-fit: cover;" />
+                                        }
+                                        else
+                                        {
+                                            <div class="card-img-top bg-gradient-primary d-flex align-items-center justify-content-center" style="height: 150px;">
+                                                <i class="fas fa-book fa-2x text-white"></i>
+                                            </div>
+                                        }
+                                        <div class="card-body d-flex flex-column">
+                                            <h6 class="card-title">@enrollment.Course.Title</h6>
+                                            <p class="text-muted small mb-2">@enrollment.Course.Category.Name</p>
+                                            
+                                            <div class="mt-auto">
+                                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                                    <small class="text-muted">Progress</small>
+                                                    <small class="text-muted">@enrollment.Progress%</small>
+                                                </div>
+                                                <div class="progress mb-3" style="height: 8px;">
+                                                    <div class="progress-bar bg-success" role="progressbar" 
+                                                         style="width: @enrollment.Progress%"
+                                                         aria-valuenow="@enrollment.Progress" 
+                                                         aria-valuemin="0" 
+                                                         aria-valuemax="100">
+                                                    </div>
+                                                </div>
+                                                <a href="@Url.Action("CourseDetails", new { id = enrollment.Course.Id })" 
+                                                   class="btn btn-primary btn-sm w-100">
+                                                    <i class="fas fa-play"></i> Continue
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                        
+                        @if (Model.EnrolledCourses.Count(e => e.CompletedAt == null) > 3)
+                        {
+                            <div class="text-center">
+                                <a href="@Url.Action("MyCourses")" class="btn btn-outline-primary">
+                                    <i class="fas fa-eye"></i> View All Courses
+                                </a>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+
+            <!-- Recent Achievements -->
+            @if (Model.Certificates.Any())
+            {
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-medal"></i> Recent Achievements</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            @foreach (var certificate in Model.Certificates.OrderByDescending(c => c.IssuedAt).Take(3))
+                            {
+                                <div class="col-md-4 mb-3">
+                                    <div class="card border-warning">
+                                        <div class="card-body text-center">
+                                            <i class="fas fa-certificate fa-3x text-warning mb-3"></i>
+                                            <h6 class="card-title">@certificate.Course.Title</h6>
+                                            <p class="text-muted small mb-2">Completed on @certificate.IssuedAt.ToString("MMM dd, yyyy")</p>
+                                            <a href="@Url.Action("DownloadCertificate", new { courseId = certificate.CourseId })" 
+                                               class="btn btn-outline-warning btn-sm">
+                                                <i class="fas fa-download"></i> Download
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+
+            <!-- Learning Activity -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-chart-line"></i> Learning Activity</h5>
+                </div>
+                <div class="card-body">
+                    @if (Model.EnrolledCourses.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Course</th>
+                                        <th>Category</th>
+                                        <th>Progress</th>
+                                        <th>Enrolled</th>
+                                        <th>Status</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var enrollment in Model.EnrolledCourses.OrderByDescending(e => e.EnrolledAt).Take(5))
+                                    {
+                                        <tr>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    @if (!string.IsNullOrEmpty(enrollment.Course.ImageUrl))
+                                                    {
+                                                        <img src="@enrollment.Course.ImageUrl" alt="@enrollment.Course.Title" 
+                                                             class="rounded me-2" style="width: 40px; height: 40px; object-fit: cover;" />
+                                                    }
+                                                    else
+                                                    {
+                                                        <div class="bg-primary rounded me-2 d-flex align-items-center justify-content-center" 
+                                                             style="width: 40px; height: 40px;">
+                                                            <i class="fas fa-book text-white"></i>
+                                                        </div>
+                                                    }
+                                                    <div>
+                                                        <h6 class="mb-0">@enrollment.Course.Title</h6>
+                                                        <small class="text-muted">@enrollment.Course.Instructor.FirstName @enrollment.Course.Instructor.LastName</small>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-secondary">@enrollment.Course.Category.Name</span>
+                                            </td>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <div class="progress me-2" style="width: 60px; height: 8px;">
+                                                        <div class="progress-bar bg-success" role="progressbar" 
+                                                             style="width: @enrollment.Progress%"
+                                                             aria-valuenow="@enrollment.Progress" 
+                                                             aria-valuemin="0" 
+                                                             aria-valuemax="100">
+                                                        </div>
+                                                    </div>
+                                                    <small>@enrollment.Progress%</small>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <small class="text-muted">@enrollment.EnrolledAt.ToString("MMM dd, yyyy")</small>
+                                            </td>
+                                            <td>
+                                                @if (enrollment.CompletedAt != null)
+                                                {
+                                                    <span class="badge bg-success">Completed</span>
+                                                }
+                                                else if (enrollment.Progress > 0)
+                                                {
+                                                    <span class="badge bg-warning">In Progress</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-secondary">Not Started</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                <a href="@Url.Action("CourseDetails", new { id = enrollment.Course.Id })" 
+                                                   class="btn btn-outline-primary btn-sm">
+                                                    <i class="fas fa-eye"></i> View
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        @if (Model.EnrolledCourses.Count > 5)
+                        {
+                            <div class="text-center mt-3">
+                                <a href="@Url.Action("MyCourses")" class="btn btn-outline-primary">
+                                    <i class="fas fa-list"></i> View All My Courses
+                                </a>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="text-center py-4">
+                            <i class="fas fa-graduation-cap fa-3x text-muted mb-3"></i>
+                            <h5>Start Your Learning Journey</h5>
+                            <p class="text-muted">You haven't enrolled in any courses yet. Explore our course catalog to get started!</p>
+                            <a href="@Url.Action("BrowseCourses")" class="btn btn-primary">
+                                <i class="fas fa-search"></i> Browse Courses
+                            </a>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Quick Actions -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-bolt"></i> Quick Actions</h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="@Url.Action("BrowseCourses")" class="btn btn-outline-primary">
+                            <i class="fas fa-search"></i> Browse Courses
+                        </a>
+                        <a href="@Url.Action("MyCourses")" class="btn btn-outline-success">
+                            <i class="fas fa-book"></i> My Courses
+                        </a>
+                        @if (Model.Certificates.Any())
+                        {
+                            <button class="btn btn-outline-warning" onclick="showCertificates()">
+                                <i class="fas fa-certificate"></i> My Certificates
+                            </button>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recommended Courses -->
+            @if (Model.RecommendedCourses.Any())
+            {
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h6 class="mb-0"><i class="fas fa-lightbulb"></i> Recommended for You</h6>
+                    </div>
+                    <div class="card-body p-0">
+                        @foreach (var course in Model.RecommendedCourses.Take(4))
+                        {
+                            <div class="border-bottom p-3">
+                                <div class="d-flex">
+                                    @if (!string.IsNullOrEmpty(course.ImageUrl))
+                                    {
+                                        <img src="@course.ImageUrl" alt="@course.Title" 
+                                             class="rounded me-3" style="width: 60px; height: 60px; object-fit: cover;" />
+                                    }
+                                    else
+                                    {
+                                        <div class="bg-gradient-primary rounded me-3 d-flex align-items-center justify-content-center" 
+                                             style="width: 60px; height: 60px;">
+                                            <i class="fas fa-book text-white"></i>
+                                        </div>
+                                    }
+                                    <div class="flex-grow-1">
+                                        <h6 class="mb-1">
+                                            <a href="@Url.Action("CourseDetails", new { id = course.Id })" 
+                                               class="text-decoration-none">
+                                                @course.Title
+                                            </a>
+                                        </h6>
+                                        <small class="text-muted d-block mb-1">@course.Instructor.FirstName @course.Instructor.LastName</small>
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            @if (course.Reviews.Any())
+                                            {
+                                                <div class="text-warning">
+                                                    @for (int i = 1; i <= 5; i++)
+                                                    {
+                                                        <i class="fas fa-star@(i <= course.AverageRating ? "" : "-o") fa-sm"></i>
+                                                    }
+                                                    <small class="text-muted ms-1">(@course.Reviews.Count)</small>
+                                                </div>
+                                            }
+                                            <strong class="@(course.IsFree ? "text-success" : "text-primary")">
+                                                @(course.IsFree ? "Free" : "$" + course.Price)
+                                            </strong>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                        <div class="p-3 text-center">
+                            <a href="@Url.Action("BrowseCourses")" class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-eye"></i> View More
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            }
+
+            <!-- Learning Tips -->
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-lightbulb"></i> Learning Tips</h6>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <h6><i class="fas fa-info-circle"></i> Did you know?</h6>
+                        <p class="mb-0 small">
+                            Studies show that taking notes while watching video lessons can improve retention by up to 34%!
+                        </p>
+                    </div>
+                    
+                    <ul class="list-unstyled">
+                        <li class="mb-2">
+                            <i class="fas fa-check-circle text-success me-2"></i>
+                            <small>Set aside dedicated time for learning</small>
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check-circle text-success me-2"></i>
+                            <small>Take breaks every 25-30 minutes</small>
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check-circle text-success me-2"></i>
+                            <small>Practice what you learn immediately</small>
+                        </li>
+                        <li class="mb-0">
+                            <i class="fas fa-check-circle text-success me-2"></i>
+                            <small>Join discussions and ask questions</small>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function showCertificates() {
+            let certificatesHtml = '<div class="row">';
+            
+            @foreach (var cert in Model.Certificates)
+            {
+                <text>
+                certificatesHtml += `
+                    <div class="col-md-6 mb-3">
+                        <div class="card border-warning">
+                            <div class="card-body text-center">
+                                <i class="fas fa-certificate fa-2x text-warning mb-2"></i>
+                                <h6>@cert.Course.Title</h6>
+                                <small class="text-muted">@cert.IssuedAt.ToString("MMM dd, yyyy")</small>
+                                <br>
+                                <a href="@Url.Action("DownloadCertificate", new { courseId = cert.CourseId })" 
+                                   class="btn btn-outline-warning btn-sm mt-2">
+                                    <i class="fas fa-download"></i> Download
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                </text>
+            }
+            
+            certificatesHtml += '</div>';
+            
+            Swal.fire({
+                title: '<i class="fas fa-certificate text-warning"></i> My Certificates',
+                html: certificatesHtml,
+                width: '800px',
+                showConfirmButton: false,
+                showCloseButton: true
+            });
+        }
+
+        $(document).ready(function() {
+            // Add hover effects to course cards
+            $('.course-progress-card').hover(
+                function() { $(this).addClass('shadow-lg'); },
+                function() { $(this).removeClass('shadow-lg'); }
+            );
+
+            // Animate progress bars on load
+            $('.progress-bar').each(function() {
+                let width = $(this).css('width');
+                $(this).css('width', '0').animate({ width: width }, 1000);
+            });
+
+            // Add fade-in animation to cards
+            $('.card').addClass('fade-in');
+        });
+    </script>
+
+    <style>
+        .bg-gradient-primary {
+            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+        }
+        
+        .bg-gradient-success {
+            background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+        }
+        
+        .bg-gradient-info {
+            background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+        }
+        
+        .bg-gradient-warning {
+            background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+        }
+        
+        .course-progress-card {
+            transition: all 0.3s ease;
+        }
+        
+        .course-progress-card:hover {
+            transform: translateY(-5px);
+        }
+    </style>
+}

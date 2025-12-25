@@ -1,0 +1,402 @@
+@model EasyLearn.Models.QuizAttempt
+@{
+    ViewData["Title"] = "Quiz Results";
+}
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <!-- Results Header -->
+            <div class="card mb-4">
+                <div class="card-header @(Model.IsPassed ? "bg-success" : "bg-danger") text-white">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h3 class="mb-0">
+                                <i class="fas fa-@(Model.IsPassed ? "check-circle" : "times-circle")"></i>
+                                @(Model.IsPassed ? "Congratulations!" : "Keep Trying!")
+                            </h3>
+                            <p class="mb-0">@Model.Quiz.Title - Results</p>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <h2 class="mb-0">@Model.Percentage.ToString("F1")%</h2>
+                            <small>@Model.Score / @Model.TotalPoints points</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-3">
+                            <div class="border rounded p-3">
+                                <h4 class="@(Model.IsPassed ? "text-success" : "text-danger") mb-1">
+                                    @Model.Percentage.ToString("F1")%
+                                </h4>
+                                <small class="text-muted">Your Score</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="border rounded p-3">
+                                <h4 class="text-primary mb-1">@Model.Quiz.PassingScore%</h4>
+                                <small class="text-muted">Passing Score</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="border rounded p-3">
+                                <h4 class="text-info mb-1">@Model.StudentAnswers.Count(sa => sa.IsCorrect)</h4>
+                                <small class="text-muted">Correct Answers</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="border rounded p-3">
+                                <h4 class="text-secondary mb-1">@Model.Quiz.Questions.Count</h4>
+                                <small class="text-muted">Total Questions</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Progress Bar -->
+                    <div class="mt-4">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Performance</span>
+                            <span>@Model.Score / @Model.TotalPoints points</span>
+                        </div>
+                        <div class="progress" style="height: 20px;">
+                            <div class="progress-bar @(Model.IsPassed ? "bg-success" : "bg-danger")" 
+                                 role="progressbar" 
+                                 style="width: @Model.Percentage%"
+                                 aria-valuenow="@Model.Percentage" 
+                                 aria-valuemin="0" 
+                                 aria-valuemax="100">
+                                @Model.Percentage.ToString("F1")%
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Status Message -->
+                    <div class="mt-4">
+                        @if (Model.IsPassed)
+                        {
+                            <div class="alert alert-success">
+                                <i class="fas fa-trophy"></i>
+                                <strong>Well done!</strong> You have successfully passed this quiz. 
+                                You can now continue with the next lesson or retake the quiz to improve your score.
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="alert alert-warning">
+                                <i class="fas fa-info-circle"></i>
+                                <strong>Don't give up!</strong> You need @Model.Quiz.PassingScore% to pass. 
+                                Review the material and try again when you're ready.
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detailed Results -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-clipboard-list"></i> Detailed Results</h5>
+                </div>
+                <div class="card-body">
+                    @for (int i = 0; i < Model.Quiz.Questions.Count; i++)
+                    {
+                        var question = Model.Quiz.Questions.ElementAt(i);
+                        var studentAnswer = Model.StudentAnswers.FirstOrDefault(sa => sa.QuestionId == question.Id);
+                        var isCorrect = studentAnswer?.IsCorrect ?? false;
+                        var correctAnswer = question.Answers.FirstOrDefault(a => a.IsCorrect);
+
+                        <div class="card mb-3 @(isCorrect ? "border-success" : "border-danger")">
+                            <div class="card-header @(isCorrect ? "bg-light-success" : "bg-light-danger")">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-@(isCorrect ? "check-circle text-success" : "times-circle text-danger")"></i>
+                                        Question @(i + 1)
+                                    </h6>
+                                    <span class="badge @(isCorrect ? "bg-success" : "bg-danger")">
+                                        @(isCorrect ? question.Points : 0) / @question.Points points
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <h6 class="mb-3">@question.Text</h6>
+                                
+                                @if (question.Type == EasyLearn.Models.QuestionType.MultipleChoice)
+                                {
+                                    <div class="row">
+                                        @foreach (var answer in question.Answers.OrderBy(a => a.OrderIndex))
+                                        {
+                                            var isStudentAnswer = studentAnswer?.AnswerText == answer.Text;
+                                            var isCorrectOption = answer.IsCorrect;
+                                            
+                                            <div class="col-12 mb-2">
+                                                <div class="p-3 border rounded @GetAnswerClass(isStudentAnswer, isCorrectOption)">
+                                                    <div class="d-flex justify-content-between align-items-center">
+                                                        <span>@answer.Text</span>
+                                                        <div>
+                                                            @if (isCorrectOption)
+                                                            {
+                                                                <i class="fas fa-check-circle text-success"></i>
+                                                            }
+                                                            @if (isStudentAnswer && !isCorrectOption)
+                                                            {
+                                                                <i class="fas fa-times-circle text-danger"></i>
+                                                            }
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        }
+                                    </div>
+                                }
+                                else if (question.Type == EasyLearn.Models.QuestionType.TrueFalse)
+                                {
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="p-3 border rounded @(correctAnswer?.Text == "True" ? "bg-light-success" : "") @(studentAnswer?.AnswerText == "True" && correctAnswer?.Text != "True" ? "bg-light-danger" : "")">
+                                                <div class="text-center">
+                                                    <i class="fas fa-check-circle fa-2x @(correctAnswer?.Text == "True" ? "text-success" : "text-muted")"></i>
+                                                    <br><strong>True</strong>
+                                                    @if (studentAnswer?.AnswerText == "True")
+                                                    {
+                                                        <br><small class="text-muted">(Your answer)</small>
+                                                    }
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="p-3 border rounded @(correctAnswer?.Text == "False" ? "bg-light-success" : "") @(studentAnswer?.AnswerText == "False" && correctAnswer?.Text != "False" ? "bg-light-danger" : "")">
+                                                <div class="text-center">
+                                                    <i class="fas fa-times-circle fa-2x @(correctAnswer?.Text == "False" ? "text-success" : "text-muted")"></i>
+                                                    <br><strong>False</strong>
+                                                    @if (studentAnswer?.AnswerText == "False")
+                                                    {
+                                                        <br><small class="text-muted">(Your answer)</small>
+                                                    }
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                                else if (question.Type == EasyLearn.Models.QuestionType.ShortAnswer)
+                                {
+                                    <div class="mb-3">
+                                        <label class="form-label"><strong>Your Answer:</strong></label>
+                                        <div class="p-3 border rounded @(isCorrect ? "bg-light-success" : "bg-light-danger")">
+                                            @(studentAnswer?.AnswerText ?? "No answer provided")
+                                        </div>
+                                    </div>
+                                    @if (correctAnswer != null)
+                                    {
+                                        <div>
+                                            <label class="form-label"><strong>Sample Answer:</strong></label>
+                                            <div class="p-3 border rounded bg-light">
+                                                @correctAnswer.Text
+                                            </div>
+                                        </div>
+                                    }
+                                }
+
+                                @if (!isCorrect && studentAnswer != null)
+                                {
+                                    <div class="mt-3">
+                                        <small class="text-muted">
+                                            <i class="fas fa-lightbulb"></i>
+                                            <strong>Tip:</strong> Review the course material related to this topic for better understanding.
+                                        </small>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Performance Analysis -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-chart-bar"></i> Performance Analysis</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Question Types Performance</h6>
+                            @{
+                                var mcqCorrect = Model.StudentAnswers.Count(sa => sa.IsCorrect && sa.Question.Type == EasyLearn.Models.QuestionType.MultipleChoice);
+                                var mcqTotal = Model.Quiz.Questions.Count(q => q.Type == EasyLearn.Models.QuestionType.MultipleChoice);
+                                var tfCorrect = Model.StudentAnswers.Count(sa => sa.IsCorrect && sa.Question.Type == EasyLearn.Models.QuestionType.TrueFalse);
+                                var tfTotal = Model.Quiz.Questions.Count(q => q.Type == EasyLearn.Models.QuestionType.TrueFalse);
+                                var saCorrect = Model.StudentAnswers.Count(sa => sa.IsCorrect && sa.Question.Type == EasyLearn.Models.QuestionType.ShortAnswer);
+                                var saTotal = Model.Quiz.Questions.Count(q => q.Type == EasyLearn.Models.QuestionType.ShortAnswer);
+                            }
+                            
+                            @if (mcqTotal > 0)
+                            {
+                                <div class="mb-2">
+                                    <div class="d-flex justify-content-between">
+                                        <span>Multiple Choice</span>
+                                        <span>@mcqCorrect / @mcqTotal</span>
+                                    </div>
+                                    <div class="progress" style="height: 8px;">
+                                        <div class="progress-bar bg-info" style="width: @((mcqCorrect * 100.0 / mcqTotal))%"></div>
+                                    </div>
+                                </div>
+                            }
+                            
+                            @if (tfTotal > 0)
+                            {
+                                <div class="mb-2">
+                                    <div class="d-flex justify-content-between">
+                                        <span>True/False</span>
+                                        <span>@tfCorrect / @tfTotal</span>
+                                    </div>
+                                    <div class="progress" style="height: 8px;">
+                                        <div class="progress-bar bg-warning" style="width: @((tfCorrect * 100.0 / tfTotal))%"></div>
+                                    </div>
+                                </div>
+                            }
+                            
+                            @if (saTotal > 0)
+                            {
+                                <div class="mb-2">
+                                    <div class="d-flex justify-content-between">
+                                        <span>Short Answer</span>
+                                        <span>@saCorrect / @saTotal</span>
+                                    </div>
+                                    <div class="progress" style="height: 8px;">
+                                        <div class="progress-bar bg-success" style="width: @((saCorrect * 100.0 / saTotal))%"></div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <h6>Quiz Information</h6>
+                            <ul class="list-unstyled">
+                                <li><strong>Completed:</strong> @Model.CompletedAt?.ToString("MMM dd, yyyy 'at' hh:mm tt")</li>
+                                <li><strong>Time Taken:</strong> @((Model.CompletedAt - Model.AttemptedAt)?.ToString(@"mm\:ss") ?? "N/A")</li>
+                                <li><strong>Passing Score:</strong> @Model.Quiz.PassingScore%</li>
+                                <li><strong>Status:</strong> 
+                                    <span class="badge @(Model.IsPassed ? "bg-success" : "bg-danger")">
+                                        @(Model.IsPassed ? "PASSED" : "FAILED")
+                                    </span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="card">
+                <div class="card-body text-center">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <a href="@Url.Action("CourseDetails", new { id = Model.Quiz.CourseId })" 
+                               class="btn btn-outline-primary w-100">
+                                <i class="fas fa-arrow-left"></i> Back to Course
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="@Url.Action("TakeQuiz", new { quizId = Model.QuizId })" 
+                               class="btn btn-warning w-100">
+                                <i class="fas fa-redo"></i> Retake Quiz
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="@Url.Action("MyCourses")" 
+                               class="btn btn-info w-100">
+                                <i class="fas fa-book"></i> My Courses
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            @if (Model.IsPassed)
+                            {
+                                <a href="@Url.Action("BrowseCourses")" 
+                                   class="btn btn-success w-100">
+                                    <i class="fas fa-graduation-cap"></i> Continue Learning
+                                </a>
+                            }
+                            else
+                            {
+                                <a href="#" class="btn btn-secondary w-100" onclick="showStudyTips()">
+                                    <i class="fas fa-lightbulb"></i> Study Tips
+                                </a>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@functions {
+    string GetAnswerClass(bool isStudentAnswer, bool isCorrectOption)
+    {
+        if (isCorrectOption)
+            return "bg-light-success border-success";
+        if (isStudentAnswer && !isCorrectOption)
+            return "bg-light-danger border-danger";
+        return "";
+    }
+}
+
+@section Scripts {
+    <script>
+        function showStudyTips() {
+            Swal.fire({
+                title: 'Study Tips',
+                html: `
+                    <div class="text-start">
+                        <h6><i class="fas fa-lightbulb text-warning"></i> Tips for Success:</h6>
+                        <ul>
+                            <li>Review the course materials thoroughly</li>
+                            <li>Take notes while watching video lessons</li>
+                            <li>Practice with similar questions</li>
+                            <li>Focus on topics where you scored low</li>
+                            <li>Don't rush - take your time to understand</li>
+                        </ul>
+                        <p class="mt-3"><strong>Remember:</strong> Learning is a process. Keep practicing and you'll improve!</p>
+                    </div>
+                `,
+                icon: 'info',
+                confirmButtonText: 'Got it!',
+                confirmButtonColor: '#007bff'
+            });
+        }
+
+        $(document).ready(function() {
+            // Show success/failure message
+            @if (TempData["QuizResult"] != null)
+            {
+                <text>
+                Swal.fire({
+                    title: '@(Model.IsPassed ? "Congratulations!" : "Keep Trying!")',
+                    text: '@TempData["QuizResult"]',
+                    icon: '@(Model.IsPassed ? "success" : "warning")',
+                    confirmButtonColor: '@(Model.IsPassed ? "#28a745" : "#ffc107")'
+                });
+                </text>
+            }
+        });
+    </script>
+
+    <style>
+        .bg-light-success {
+            background-color: #d4edda !important;
+        }
+        
+        .bg-light-danger {
+            background-color: #f8d7da !important;
+        }
+        
+        .border-success {
+            border-color: #28a745 !important;
+        }
+        
+        .border-danger {
+            border-color: #dc3545 !important;
+        }
+    </style>
+}

@@ -1,0 +1,348 @@
+@model EasyLearn.Controllers.LoginViewModel
+@{
+    ViewData["Title"] = "Login";
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login - EasyLearn</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/modern-aesthetic.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .auth-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            animation: slideInUp 0.8s ease-out;
+        }
+        
+        .auth-left {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.9) 0%, rgba(118, 75, 162, 0.9) 100%);
+            color: white;
+            padding: 3rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .auth-left::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: float 8s ease-in-out infinite;
+        }
+        
+        .auth-right {
+            padding: 3rem;
+        }
+        
+        .form-floating {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-floating > .form-control {
+            border: 2px solid #e9ecef;
+            border-radius: 15px;
+            padding: 1rem 0.75rem;
+            height: auto;
+            transition: all 0.3s ease;
+        }
+        
+        .form-floating > .form-control:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+            transform: translateY(-2px);
+        }
+        
+        .form-floating > label {
+            padding: 1rem 0.75rem;
+            color: #6c757d;
+        }
+        
+        .btn-auth {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 15px;
+            padding: 15px 30px;
+            font-weight: 600;
+            color: white;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn-auth::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+        
+        .btn-auth:hover::before {
+            left: 100%;
+        }
+        
+        .btn-auth:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        }
+        
+        .btn-outline-light {
+            border: 2px solid rgba(255,255,255,0.8);
+            color: white;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-outline-light:hover {
+            background: rgba(255,255,255,0.2);
+            border-color: white;
+            color: white;
+            transform: translateY(-2px);
+        }
+        
+        .social-btn {
+            border: 2px solid #e9ecef;
+            border-radius: 15px;
+            padding: 12px;
+            transition: all 0.3s ease;
+            background: white;
+        }
+        
+        .social-btn:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .floating-icon {
+            position: absolute;
+            color: rgba(255,255,255,0.1);
+            animation: float 6s ease-in-out infinite;
+        }
+        
+        .floating-icon:nth-child(2) { animation-delay: -2s; }
+        .floating-icon:nth-child(3) { animation-delay: -4s; }
+        
+        @@keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .checkbox-custom {
+            position: relative;
+        }
+        
+        .checkbox-custom input[type="checkbox"] {
+            opacity: 0;
+            position: absolute;
+        }
+        
+        .checkbox-custom label {
+            position: relative;
+            padding-left: 30px;
+            cursor: pointer;
+        }
+        
+        .checkbox-custom label::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 2px;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #e9ecef;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+        }
+        
+        .checkbox-custom input[type="checkbox"]:checked + label::before {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-color: #667eea;
+        }
+        
+        .checkbox-custom input[type="checkbox"]:checked + label::after {
+            content: '\f00c';
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            position: absolute;
+            left: 4px;
+            top: 2px;
+            color: white;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-10 col-xl-8">
+                <div class="auth-container">
+                    <div class="row g-0">
+                        <div class="col-lg-6">
+                            <div class="auth-left">
+                                <div class="text-center mb-4">
+                                    <i class="fas fa-graduation-cap" style="font-size: 4rem; margin-bottom: 1rem;"></i>
+                                    <h2 class="fw-bold">Welcome Back!</h2>
+                                    <p class="opacity-75">Sign in to continue your learning journey</p>
+                                </div>
+                                
+                                <div class="text-center">
+                                    <div class="mb-4">
+                                        <h5>New to EasyLearn?</h5>
+                                        <p class="opacity-75 mb-3">Join thousands of learners worldwide</p>
+                                        <a href="@Url.Action("Register", "Account")" class="btn btn-outline-light btn-lg" style="border-radius: 15px; padding: 12px 30px; text-decoration: none; display: inline-block;">
+                                            Create Account
+                                        </a>
+                                    </div>
+                                </div>
+                                
+                                <i class="fas fa-book floating-icon" style="top: 10%; left: 10%; font-size: 3rem;"></i>
+                                <i class="fas fa-laptop floating-icon" style="bottom: 20%; right: 15%; font-size: 2.5rem;"></i>
+                                <i class="fas fa-lightbulb floating-icon" style="top: 60%; left: 20%; font-size: 2rem;"></i>
+                            </div>
+                        </div>
+                        
+                        <div class="col-lg-6">
+                            <div class="auth-right">
+                                <div class="text-center mb-4">
+                                    <h3 class="fw-bold text-dark">Sign In</h3>
+                                    <p class="text-muted">Enter your credentials to access your account</p>
+                                </div>
+                                
+                                <form asp-action="Login" method="post" asp-antiforgery="true">
+                                    <div asp-validation-summary="All" class="alert alert-danger" style="border-radius: 15px;"></div>
+                                    
+                                    <div class="form-floating">
+                                        <input asp-for="Email" class="form-control" type="email" placeholder="Email" required />
+                                        <label asp-for="Email"><i class="fas fa-envelope me-2"></i>Email Address</label>
+                                        <span asp-validation-for="Email" class="text-danger"></span>
+                                    </div>
+                                    
+                                    <div class="form-floating">
+                                        <input asp-for="Password" class="form-control" type="password" placeholder="Password" required />
+                                        <label asp-for="Password"><i class="fas fa-lock me-2"></i>Password</label>
+                                        <span asp-validation-for="Password" class="text-danger"></span>
+                                    </div>
+                                    
+                                    <div class="d-flex justify-content-between align-items-center mb-4">
+                                        <div class="checkbox-custom">
+                                            <input asp-for="RememberMe" type="checkbox" id="rememberMe" />
+                                            <label for="rememberMe">Remember me</label>
+                                        </div>
+                                        <a asp-action="ForgotPassword" class="text-decoration-none" style="color: #667eea;">
+                                            Forgot Password?
+                                        </a>
+                                    </div>
+                                    
+                                    <div class="d-grid mb-4">
+                                        <button type="submit" class="btn btn-auth btn-lg">
+                                            <i class="fas fa-sign-in-alt me-2"></i>Sign In
+                                        </button>
+                                    </div>
+                                </form>
+                                
+                                <div class="text-center">
+                                    <p class="text-muted mb-3">Or sign in with</p>
+                                    <div class="row g-2">
+                                        <div class="col-4">
+                                            <form asp-action="ExternalLogin" method="post" style="display: inline;">
+                                                <input type="hidden" name="provider" value="Google" />
+                                                <input type="hidden" name="returnUrl" value="@ViewData["ReturnUrl"]" />
+                                                <button type="submit" class="btn social-btn w-100">
+                                                    <i class="fab fa-google text-danger"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                        <div class="col-4">
+                                            <form asp-action="ExternalLogin" method="post" style="display: inline;">
+                                                <input type="hidden" name="provider" value="Facebook" />
+                                                <input type="hidden" name="returnUrl" value="@ViewData["ReturnUrl"]" />
+                                                <button type="submit" class="btn social-btn w-100">
+                                                    <i class="fab fa-facebook text-primary"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                        <div class="col-4">
+                                            <form asp-action="ExternalLogin" method="post" style="display: inline;">
+                                                <input type="hidden" name="provider" value="GitHub" />
+                                                <input type="hidden" name="returnUrl" value="@ViewData["ReturnUrl"]" />
+                                                <button type="submit" class="btn social-btn w-100">
+                                                    <i class="fab fa-github text-dark"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Ensure all buttons are clickable
+        document.addEventListener('DOMContentLoaded', function() {
+            // Fix button z-index issues
+            document.querySelectorAll('.btn').forEach(btn => {
+                btn.style.position = 'relative';
+                btn.style.zIndex = '10';
+            });
+        });
+        
+        // Form animations
+        document.querySelectorAll('.form-control').forEach(input => {
+            input.addEventListener('focus', function() {
+                this.parentElement.style.transform = 'scale(1.02)';
+            });
+            
+            input.addEventListener('blur', function() {
+                this.parentElement.style.transform = 'scale(1)';
+            });
+        });
+        
+        // Button loading state
+        document.querySelector('form').addEventListener('submit', function(e) {
+            const btn = this.querySelector('button[type="submit"]');
+            if (btn) {
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Signing In...';
+                btn.disabled = true;
+            }
+        });
+    </script>
+</body>
+</html>

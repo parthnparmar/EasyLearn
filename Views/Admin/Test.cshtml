@@ -1,0 +1,73 @@
+@{
+    ViewData["Title"] = "Admin Routes Test";
+}
+
+<div class="container">
+    <h2>Admin Module Routes Test</h2>
+    <p>Test all admin routes to ensure they are working correctly:</p>
+    
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Main Admin Routes</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        <a href="/admin" class="list-group-item list-group-item-action">
+                            <i class="fas fa-tachometer-alt"></i> Admin Dashboard
+                        </a>
+                        <a href="/admin/users" class="list-group-item list-group-item-action">
+                            <i class="fas fa-users"></i> Manage Users
+                        </a>
+                        <a href="/admin/courses/approval" class="list-group-item list-group-item-action">
+                            <i class="fas fa-check-circle"></i> Course Approvals
+                        </a>
+                        <a href="/admin/categories" class="list-group-item list-group-item-action">
+                            <i class="fas fa-tags"></i> Manage Categories
+                        </a>
+                        <a href="/admin/announcements" class="list-group-item list-group-item-action">
+                            <i class="fas fa-bullhorn"></i> Manage Announcements
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Export Routes</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        <a href="/admin/export/users" class="list-group-item list-group-item-action">
+                            <i class="fas fa-download"></i> Export Users (CSV)
+                        </a>
+                        <a href="/admin/export/courses" class="list-group-item list-group-item-action">
+                            <i class="fas fa-download"></i> Export Courses (CSV)
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5>Features Implemented</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled">
+                        <li><i class="fas fa-check text-success"></i> User Management (Add/Edit/Block)</li>
+                        <li><i class="fas fa-check text-success"></i> Course Approval System</li>
+                        <li><i class="fas fa-check text-success"></i> Category Management (CRUD)</li>
+                        <li><i class="fas fa-check text-success"></i> Announcement System</li>
+                        <li><i class="fas fa-check text-success"></i> Latest Registrations Display</li>
+                        <li><i class="fas fa-check text-success"></i> Data Export (CSV)</li>
+                        <li><i class="fas fa-check text-success"></i> Role-based Access Control</li>
+                        <li><i class="fas fa-check text-success"></i> Responsive Design</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

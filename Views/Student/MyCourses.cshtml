@@ -1,0 +1,431 @@
+@model List<EasyLearn.Models.Enrollment>
+@{
+    ViewData["Title"] = "My Courses";
+}
+
+<div class="container-fluid fade-in">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="fas fa-book-reader text-primary"></i> My Courses
+        </h1>
+        <a href="/Student/BrowseCourses" class="btn btn-modern btn-primary">
+            <i class="fas fa-plus"></i> Enroll in More Courses
+        </a>
+    </div>
+
+    <!-- Filter and Search -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="modern-card">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-4">
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                <input type="text" class="form-control" id="searchCourses" placeholder="Search my courses...">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <select class="form-select" id="progressFilter">
+                                <option value="">All Progress</option>
+                                <option value="not-started">Not Started</option>
+                                <option value="in-progress">In Progress</option>
+                                <option value="completed">Completed</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <select class="form-select" id="categoryFilter">
+                                <option value="">All Categories</option>
+                                <option value="programming">Programming</option>
+                                <option value="design">Design</option>
+                                <option value="business">Business</option>
+                                <option value="marketing">Marketing</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <button class="btn btn-modern btn-outline-secondary w-100" onclick="clearFilters()">
+                                <i class="fas fa-times"></i> Clear
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (Model.Any())
+    {
+        <!-- Courses Grid -->
+        <div class="row" id="coursesContainer">
+            @foreach (var enrollment in Model)
+            {
+                var progressStatus = enrollment.Progress == 0 ? "not-started" : 
+                                   enrollment.Progress == 100 ? "completed" : "in-progress";
+                
+                <div class="col-lg-6 col-xl-4 mb-4 course-item" 
+                     data-progress="@progressStatus" 
+                     data-category="@enrollment.Course.Category.Name.ToLower()"
+                     data-title="@enrollment.Course.Title.ToLower()">
+                    <div class="course-card-modern">
+                        <div class="course-image position-relative">
+                            @if (!string.IsNullOrEmpty(enrollment.Course.ImageUrl))
+                            {
+                                <img src="@enrollment.Course.ImageUrl" alt="@enrollment.Course.Title" class="w-100 h-100" style="object-fit: cover;">
+                            }
+                            else
+                            {
+                                <div class="d-flex align-items-center justify-content-center h-100">
+                                    <i class="fas fa-book fa-3x text-white"></i>
+                                </div>
+                            }
+                            
+                            <!-- Progress Overlay -->
+                            <div class="position-absolute bottom-0 start-0 end-0 p-3" style="background: linear-gradient(transparent, rgba(0,0,0,0.7));">
+                                <div class="progress-modern mb-2">
+                                    <div class="progress-bar-modern" style="width: @enrollment.Progress%"></div>
+                                </div>
+                                <small class="text-white">@enrollment.Progress% Complete</small>
+                            </div>
+
+                            <!-- Status Badge -->
+                            <div class="position-absolute top-0 end-0 m-3">
+                                @if (enrollment.CompletedAt != null)
+                                {
+                                    <span class="badge bg-success">
+                                        <i class="fas fa-check"></i> Completed
+                                    </span>
+                                }
+                                else if (enrollment.Progress > 0)
+                                {
+                                    <span class="badge bg-warning">
+                                        <i class="fas fa-play"></i> In Progress
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">
+                                        <i class="fas fa-clock"></i> Not Started
+                                    </span>
+                                }
+                            </div>
+                        </div>
+                        
+                        <div class="card-body">
+                            <h5 class="card-title">@enrollment.Course.Title</h5>
+                            <p class="card-text text-muted">@enrollment.Course.Description.Substring(0, Math.Min(100, enrollment.Course.Description.Length))...</p>
+                            
+                            <div class="row text-center mb-3">
+                                <div class="col-4">
+                                    <small class="text-muted">Instructor</small><br>
+                                    <strong class="small">@enrollment.Course.Instructor.FirstName @enrollment.Course.Instructor.LastName</strong>
+                                </div>
+                                <div class="col-4">
+                                    <small class="text-muted">Lessons</small><br>
+                                    <strong>@enrollment.Course.Lessons.Count</strong>
+                                </div>
+                                <div class="col-4">
+                                    <small class="text-muted">Category</small><br>
+                                    <strong class="small">@enrollment.Course.Category.Name</strong>
+                                </div>
+                            </div>
+
+                            <div class="d-grid gap-2">
+                                @if (enrollment.CompletedAt != null)
+                                {
+                                    <div class="btn-group" role="group">
+                                        <a href="/Student/CourseDetails/@enrollment.CourseId" class="btn btn-modern btn-outline-success btn-sm">
+                                            <i class="fas fa-eye"></i> Review
+                                        </a>
+                                        <a href="/Student/DownloadCertificate/@enrollment.CourseId" class="btn btn-modern btn-success btn-sm">
+                                            <i class="fas fa-certificate"></i> Certificate
+                                        </a>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <a href="/Student/CourseDetails/@enrollment.CourseId" class="btn btn-modern btn-primary">
+                                        <i class="fas fa-play"></i> @(enrollment.Progress > 0 ? "Continue Learning" : "Start Learning")
+                                    </a>
+                                }
+                                
+                                <button class="btn btn-modern btn-outline-info btn-sm" onclick="showCourseDetails(@enrollment.CourseId)">
+                                    <i class="fas fa-info-circle"></i> Course Details
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- Learning Statistics -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="modern-card">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0"><i class="fas fa-chart-bar"></i> Learning Statistics</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3 text-center">
+                                <div class="stats-number text-primary">@Model.Count</div>
+                                <div class="stats-label">Total Enrolled</div>
+                            </div>
+                            <div class="col-md-3 text-center">
+                                <div class="stats-number text-success">@Model.Count(e => e.CompletedAt != null)</div>
+                                <div class="stats-label">Completed</div>
+                            </div>
+                            <div class="col-md-3 text-center">
+                                <div class="stats-number text-warning">@Model.Count(e => e.Progress > 0 && e.CompletedAt == null)</div>
+                                <div class="stats-label">In Progress</div>
+                            </div>
+                            <div class="col-md-3 text-center">
+                                <div class="stats-number text-info">@(Model.Any() ? Model.Average(e => e.Progress).ToString("F0") : "0")%</div>
+                                <div class="stats-label">Avg Progress</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <!-- Empty State -->
+        <div class="row">
+            <div class="col-12">
+                <div class="modern-card">
+                    <div class="card-body text-center py-5">
+                        <i class="fas fa-book-open fa-5x text-muted mb-4"></i>
+                        <h3>No Enrolled Courses</h3>
+                        <p class="text-muted mb-4">Start your learning journey by enrolling in courses that interest you!</p>
+                        <a href="/Student/BrowseCourses" class="btn btn-modern btn-primary btn-lg">
+                            <i class="fas fa-search"></i> Browse Available Courses
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<!-- Course Details Modal -->
+<div class="modal fade modal-modern" id="courseDetailsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-info-circle"></i> Course Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="courseDetailsContent">
+                <!-- Content will be loaded dynamically -->
+                <div class="text-center py-4">
+                    <div class="loading-spinner"></div>
+                    <p class="mt-2">Loading course details...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Video Player Modal -->
+<div class="modal fade modal-modern" id="videoPlayerModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-play"></i> <span id="videoTitle">Video Lesson</span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-0">
+                <div class="video-player-modern">
+                    <div id="videoContainer" class="ratio ratio-16x9">
+                        <!-- YouTube video will be embedded here -->
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-modern btn-success" onclick="markLessonComplete()">
+                    <i class="fas fa-check"></i> Mark as Complete
+                </button>
+                <button type="button" class="btn btn-modern btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let currentLessonId = null;
+
+        function showCourseDetails(courseId) {
+            $('#courseDetailsModal').modal('show');
+            
+            // Simulate loading course details
+            setTimeout(() => {
+                $('#courseDetailsContent').html(`
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Course Information</h6>
+                            <p><strong>Duration:</strong> 8 hours</p>
+                            <p><strong>Lessons:</strong> 24 lessons</p>
+                            <p><strong>Quizzes:</strong> 6 quizzes</p>
+                            <p><strong>Certificate:</strong> Yes</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Your Progress</h6>
+                            <div class="progress-modern mb-2">
+                                <div class="progress-bar-modern" style="width: 65%"></div>
+                            </div>
+                            <p>65% Complete</p>
+                            <p><strong>Time Spent:</strong> 5.2 hours</p>
+                            <p><strong>Last Accessed:</strong> 2 days ago</p>
+                        </div>
+                    </div>
+                    <hr>
+                    <h6>Recent Lessons</h6>
+                    <div class="list-group">
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>Introduction to JavaScript</strong><br>
+                                <small class="text-muted">Duration: 15 minutes</small>
+                            </div>
+                            <button class="btn btn-sm btn-outline-primary" onclick="playVideo('dQw4w9WgXcQ', 'Introduction to JavaScript')">
+                                <i class="fas fa-play"></i> Watch
+                            </button>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>Variables and Data Types</strong><br>
+                                <small class="text-muted">Duration: 20 minutes</small>
+                            </div>
+                            <button class="btn btn-sm btn-outline-primary" onclick="playVideo('dQw4w9WgXcQ', 'Variables and Data Types')">
+                                <i class="fas fa-play"></i> Watch
+                            </button>
+                        </div>
+                    </div>
+                `);
+            }, 1000);
+        }
+
+        function playVideo(videoId, title) {
+            currentLessonId = Math.floor(Math.random() * 1000); // Simulate lesson ID
+            $('#videoTitle').text(title);
+            $('#videoContainer').html(`
+                <iframe src="https://www.youtube.com/embed/${videoId}?autoplay=1" 
+                        frameborder="0" 
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                        allowfullscreen>
+                </iframe>
+            `);
+            $('#courseDetailsModal').modal('hide');
+            $('#videoPlayerModal').modal('show');
+        }
+
+        function markLessonComplete() {
+            if (currentLessonId) {
+                // Simulate API call to mark lesson as complete
+                showNotification('Lesson marked as complete!', 'success');
+                $('#videoPlayerModal').modal('hide');
+                
+                // Update progress (simulate)
+                setTimeout(() => {
+                    location.reload();
+                }, 1500);
+            }
+        }
+
+        function clearFilters() {
+            $('#searchCourses').val('');
+            $('#progressFilter').val('');
+            $('#categoryFilter').val('');
+            filterCourses();
+        }
+
+        function filterCourses() {
+            const search = $('#searchCourses').val().toLowerCase();
+            const progress = $('#progressFilter').val();
+            const category = $('#categoryFilter').val();
+
+            $('.course-item').each(function() {
+                const $item = $(this);
+                const title = $item.data('title');
+                const itemProgress = $item.data('progress');
+                const itemCategory = $item.data('category');
+
+                let show = true;
+
+                if (search && !title.includes(search)) {
+                    show = false;
+                }
+
+                if (progress && itemProgress !== progress) {
+                    show = false;
+                }
+
+                if (category && itemCategory !== category) {
+                    show = false;
+                }
+
+                if (show) {
+                    $item.removeClass('d-none').addClass('fade-in');
+                } else {
+                    $item.addClass('d-none');
+                }
+            });
+        }
+
+        function showNotification(message, type) {
+            const notification = $(`
+                <div class="notification ${type}">
+                    <i class="fas fa-${type === 'success' ? 'check' : type === 'warning' ? 'exclamation' : 'info'}-circle me-2"></i>
+                    ${message}
+                </div>
+            `);
+            
+            $('body').append(notification);
+            setTimeout(() => notification.addClass('show'), 100);
+            setTimeout(() => {
+                notification.removeClass('show');
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+
+        // Event listeners
+        $('#searchCourses').on('input', filterCourses);
+        $('#progressFilter, #categoryFilter').on('change', filterCourses);
+
+        // Initialize animations
+        $(document).ready(function() {
+            // Stagger animation for course cards
+            $('.course-item').each(function(index) {
+                $(this).css('animation-delay', (index * 0.1) + 's');
+            });
+
+            // Animate stats
+            $('.stats-number').each(function() {
+                const $this = $(this);
+                const countTo = parseInt($this.text().replace('%', ''));
+                
+                $({ countNum: 0 }).animate({
+                    countNum: countTo
+                }, {
+                    duration: 2000,
+                    easing: 'swing',
+                    step: function() {
+                        const suffix = $this.text().includes('%') ? '%' : '';
+                        $this.text(Math.floor(this.countNum) + suffix);
+                    },
+                    complete: function() {
+                        const suffix = $this.text().includes('%') ? '%' : '';
+                        $this.text(countTo + suffix);
+                    }
+                });
+            });
+
+            // Clean up video when modal is closed
+            $('#videoPlayerModal').on('hidden.bs.modal', function() {
+                $('#videoContainer').html('');
+            });
+        });
+    </script>
+}

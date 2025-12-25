@@ -1,0 +1,282 @@
+@model EasyLearn.Models.Course
+@{
+    ViewData["Title"] = "Manage Content";
+}
+
+<div class="container py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between">
+                    <h4>@Model.Title - Content Management</h4>
+                    <div>
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#lessonModal">
+                            <i class="fas fa-plus"></i> Add Lesson
+                        </button>
+                        <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#quizModal">
+                            <i class="fas fa-question"></i> Add Quiz
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <h5>Lessons (@Model.Lessons.Count)</h5>
+                    @if (Model.Lessons.Any())
+                    {
+                        <table class="table">
+                            <thead>
+                                <tr><th>#</th><th>Title</th><th>Duration</th><th>Video</th><th>Materials</th></tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var lesson in Model.Lessons.OrderBy(l => l.OrderIndex))
+                                {
+                                    <tr>
+                                        <td>@lesson.OrderIndex</td>
+                                        <td>@lesson.Title</td>
+                                        <td>@lesson.Duration.ToString(@"mm\:ss")</td>
+                                        <td>@(!string.IsNullOrEmpty(lesson.VideoUrl) ? "✓" : "✗")</td>
+                                        <td>@(!string.IsNullOrEmpty(lesson.MaterialUrl) ? "✓" : "✗")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    }
+                    else
+                    {
+                        <p class="text-muted">No lessons added yet.</p>
+                    }
+
+                    <hr>
+                    <h5>Quizzes (@Model.Quizzes.Count)</h5>
+                    @if (Model.Quizzes.Any())
+                    {
+                        <div class="row">
+                            @foreach (var quiz in Model.Quizzes)
+                            {
+                                <div class="col-md-4 mb-3">
+                                    <div class="card">
+                                        <div class="card-body">
+                                            <h6>@quiz.Title</h6>
+                                            <p class="small">@quiz.Questions.Count questions</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="text-muted">No quizzes added yet.</p>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Lesson Modal -->
+<div class="modal fade" id="lessonModal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5>Add Lesson</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="lessonForm">
+                <div class="modal-body">
+                    <input type="hidden" name="CourseId" value="@Model.Id" />
+                    <input type="hidden" name="OrderIndex" value="@(Model.Lessons.Count + 1)" />
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Title *</label>
+                        <input type="text" name="Title" class="form-control" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">YouTube URL *</label>
+                        <input type="url" name="VideoUrl" class="form-control" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Duration (minutes)</label>
+                        <input type="number" name="Duration" class="form-control" value="10">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Materials</label>
+                        <input type="file" id="materialFile" class="form-control" accept=".pdf,.doc,.docx">
+                        <input type="hidden" name="MaterialUrl" id="materialUrl">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Quiz Modal -->
+<div class="modal fade" id="quizModal">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5>Create Quiz</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="quizForm">
+                <div class="modal-body">
+                    <input type="hidden" name="CourseId" value="@Model.Id" />
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label class="form-label">Title *</label>
+                            <input type="text" name="Title" class="form-control" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Time (min)</label>
+                            <input type="number" name="TimeLimit" class="form-control" value="30">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Pass %</label>
+                            <input type="number" name="PassingScore" class="form-control" value="70">
+                        </div>
+                    </div>
+                    
+                    <div class="mt-3">
+                        <h6>Questions</h6>
+                        <div id="questions">
+                            <div class="border p-3 mb-3">
+                                <textarea name="Questions[0].Text" class="form-control mb-2" placeholder="Question 1" required></textarea>
+                                <input type="hidden" name="Questions[0].Type" value="1">
+                                <input type="hidden" name="Questions[0].Points" value="1">
+                                
+                                <div class="row">
+                                    <div class="col-6">
+                                        <div class="input-group">
+                                            <div class="input-group-text">
+                                                <input type="radio" name="Questions[0].CorrectAnswer" value="0">
+                                            </div>
+                                            <input type="text" name="Questions[0].Answers[0].Text" class="form-control" placeholder="Option A" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="input-group">
+                                            <div class="input-group-text">
+                                                <input type="radio" name="Questions[0].CorrectAnswer" value="1">
+                                            </div>
+                                            <input type="text" name="Questions[0].Answers[1].Text" class="form-control" placeholder="Option B" required>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-outline-primary" onclick="addQuestion()">+ Add Question</button>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success">Create</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+let questionCount = 1;
+
+document.getElementById('lessonForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    
+    // Upload file if selected
+    const file = document.getElementById('materialFile').files[0];
+    if (file) {
+        const uploadData = new FormData();
+        uploadData.append('file', file);
+        uploadData.append('courseId', '@Model.Id');
+        
+        const uploadRes = await fetch('/instructor/upload-material', { method: 'POST', body: uploadData });
+        const uploadResult = await uploadRes.json();
+        if (uploadResult.success) formData.set('MaterialUrl', uploadResult.url);
+    }
+    
+    const response = await fetch('/instructor/create-lesson', { method: 'POST', body: formData });
+    const result = await response.json();
+    
+    if (result.success) location.reload();
+    else alert('Error: ' + result.message);
+});
+
+document.getElementById('quizForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    const data = { CourseId: parseInt(formData.get('CourseId')), Title: formData.get('Title'), TimeLimit: parseInt(formData.get('TimeLimit')), PassingScore: parseInt(formData.get('PassingScore')), Questions: [] };
+    
+    // Build questions array
+    for (let i = 0; i < questionCount; i++) {
+        const questionText = formData.get(`Questions[${i}].Text`);
+        if (questionText) {
+            const question = {
+                Text: questionText,
+                Type: 1,
+                Points: 1,
+                Answers: [
+                    { Text: formData.get(`Questions[${i}].Answers[0].Text`), IsCorrect: false },
+                    { Text: formData.get(`Questions[${i}].Answers[1].Text`), IsCorrect: false }
+                ]
+            };
+            
+            const correctAnswer = formData.get(`Questions[${i}].CorrectAnswer`);
+            if (correctAnswer !== null) {
+                question.Answers[parseInt(correctAnswer)].IsCorrect = true;
+            }
+            
+            data.Questions.push(question);
+        }
+    }
+    
+    const response = await fetch('/instructor/create-quiz', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    });
+    
+    const result = await response.json();
+    if (result.success) location.reload();
+    else alert('Error: ' + result.message);
+});
+
+function addQuestion() {
+    const container = document.getElementById('questions');
+    const html = `
+        <div class="border p-3 mb-3">
+            <textarea name="Questions[${questionCount}].Text" class="form-control mb-2" placeholder="Question ${questionCount + 1}" required></textarea>
+            <input type="hidden" name="Questions[${questionCount}].Type" value="1">
+            <input type="hidden" name="Questions[${questionCount}].Points" value="1">
+            
+            <div class="row">
+                <div class="col-6">
+                    <div class="input-group">
+                        <div class="input-group-text">
+                            <input type="radio" name="Questions[${questionCount}].CorrectAnswer" value="0">
+                        </div>
+                        <input type="text" name="Questions[${questionCount}].Answers[0].Text" class="form-control" placeholder="Option A" required>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="input-group">
+                        <div class="input-group-text">
+                            <input type="radio" name="Questions[${questionCount}].CorrectAnswer" value="1">
+                        </div>
+                        <input type="text" name="Questions[${questionCount}].Answers[1].Text" class="form-control" placeholder="Option B" required>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    container.insertAdjacentHTML('beforeend', html);
+    questionCount++;
+}
+</script>

@@ -1,0 +1,302 @@
+@model Course
+@{
+    ViewData["Title"] = Model.Title;
+}
+
+<div class="course-details-hero" style="background: linear-gradient(135deg, rgba(102, 126, 234, 0.9) 0%, rgba(118, 75, 162, 0.9) 100%), url('https://images.unsplash.com/photo-1522202176988-66273c2fd55f?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80'); background-size: cover; background-position: center; min-height: 60vh;">
+    <div class="container h-100">
+        <div class="row h-100 align-items-center">
+            <div class="col-lg-8">
+                <div class="text-white slide-in-left">
+                    <div class="d-flex align-items-center mb-3">
+                        <span class="badge bg-light text-dark me-3 px-3 py-2">@Model.Category?.Name</span>
+                        @if (Model.Price == 0)
+                        {
+                            <span class="badge bg-success px-3 py-2">Free Course</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-warning text-dark px-3 py-2">$@Model.Price.ToString("F2")</span>
+                        }
+                    </div>
+                    
+                    <h1 class="display-4 fw-bold mb-4">@Model.Title</h1>
+                    <p class="lead mb-4" style="opacity: 0.9;">@Model.Description</p>
+                    
+                    <div class="d-flex align-items-center mb-4">
+                        <div class="avatar-circle me-3" style="width: 50px; height: 50px; font-size: 1.2rem;">
+                            @Model.Instructor?.FirstName?.Substring(0, 1)@Model.Instructor?.LastName?.Substring(0, 1)
+                        </div>
+                        <div>
+                            <h6 class="mb-0">@Model.Instructor?.FirstName @Model.Instructor?.LastName</h6>
+                            <small style="opacity: 0.8;">Course Instructor</small>
+                        </div>
+                    </div>
+                    
+                    <div class="row g-3 mb-4">
+                        <div class="col-auto">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-users me-2"></i>
+                                <span>@Model.Enrollments?.Count() Students</span>
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-play-circle me-2"></i>
+                                <span>@Model.Lessons?.Count() Lessons</span>
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-clock me-2"></i>
+                                <span>Self-paced</span>
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <div class="d-flex align-items-center rating-stars">
+                                @for (int i = 1; i <= 5; i++)
+                                {
+                                    <i class="fas fa-star me-1"></i>
+                                }
+                                <span class="ms-2">(4.8)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="modern-card shadow-strong slide-in-right">
+                    <div class="card-body p-4 text-center">
+                        @if (ViewBag.IsEnrolled == true)
+                        {
+                            <h5 class="text-success mb-3">
+                                <i class="fas fa-check-circle me-2"></i>You're Enrolled!
+                            </h5>
+                            <a href="@Url.Action("MyCourses", "Student")" class="btn btn-modern gradient-success w-100 mb-3">
+                                <i class="fas fa-play me-2"></i>Continue Learning
+                            </a>
+                        }
+                        else
+                        {
+                            <h4 class="fw-bold mb-3">
+                                @if (Model.Price == 0)
+                                {
+                                    <span class="text-success">Free</span>
+                                }
+                                else
+                                {
+                                    <span>$@Model.Price.ToString("F2")</span>
+                                }
+                            </h4>
+                            <form method="post" asp-action="EnrollCourse" asp-controller="Student">
+                                <input type="hidden" name="courseId" value="@Model.Id" />
+                                <button type="submit" class="btn btn-modern gradient-primary w-100 mb-3">
+                                    <i class="fas fa-graduation-cap me-2"></i>Enroll Now
+                                </button>
+                            </form>
+                        }
+                        
+                        <div class="text-start">
+                            <h6 class="fw-bold mb-3">This course includes:</h6>
+                            <ul class="list-unstyled">
+                                <li class="mb-2">
+                                    <i class="fas fa-video text-primary me-2"></i>
+                                    @Model.Lessons?.Count() video lessons
+                                </li>
+                                <li class="mb-2">
+                                    <i class="fas fa-download text-primary me-2"></i>
+                                    Downloadable resources
+                                </li>
+                                <li class="mb-2">
+                                    <i class="fas fa-mobile-alt text-primary me-2"></i>
+                                    Mobile and desktop access
+                                </li>
+                                <li class="mb-2">
+                                    <i class="fas fa-certificate text-primary me-2"></i>
+                                    Certificate of completion
+                                </li>
+                                <li class="mb-2">
+                                    <i class="fas fa-infinity text-primary me-2"></i>
+                                    Lifetime access
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container py-5">
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Course Content -->
+            <div class="modern-card shadow-soft mb-4 scroll-animate">
+                <div class="card-body p-4">
+                    <h3 class="fw-bold mb-4">Course Content</h3>
+                    @if (Model.Lessons != null && Model.Lessons.Any())
+                    {
+                        <div class="accordion" id="courseContent">
+                            @for (int i = 0; i < Model.Lessons.Count(); i++)
+                            {
+                                var lesson = Model.Lessons.ElementAt(i);
+                                <div class="accordion-item border-0 mb-3" style="border-radius: 10px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button @(i != 0 ? "collapsed" : "")" type="button" 
+                                                data-bs-toggle="collapse" data-bs-target="#lesson@(lesson.Id)">
+                                            <div class="d-flex align-items-center w-100">
+                                                <div class="me-3">
+                                                    <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" 
+                                                         style="width: 30px; height: 30px; font-size: 0.8rem;">
+                                                        @(i + 1)
+                                                    </div>
+                                                </div>
+                                                <div class="flex-grow-1">
+                                                    <h6 class="mb-0">@lesson.Title</h6>
+                                                    <small class="text-muted">
+                                                        <i class="fas fa-play-circle me-1"></i>Video Lesson
+                                                        @if (!string.IsNullOrEmpty(lesson.MaterialUrl))
+                                                        {
+                                                            <span><i class="fas fa-download ms-3 me-1"></i>Materials</span>
+                                                        }
+                                                    </small>
+                                                </div>
+                                            </div>
+                                        </button>
+                                    </h2>
+                                    <div id="lesson@(lesson.Id)" class="accordion-collapse collapse @(i == 0 ? "show" : "")" 
+                                         data-bs-parent="#courseContent">
+                                        <div class="accordion-body">
+                                            <p class="text-muted mb-3">@lesson.Description</p>
+                                            <div class="d-flex gap-2">
+                                                @if (ViewBag.IsEnrolled == true)
+                                                {
+                                                    <a href="@Url.Action("WatchLesson", "Student", new { id = lesson.Id })" 
+                                                       class="btn btn-sm btn-modern gradient-primary">
+                                                        <i class="fas fa-play me-1"></i>Watch
+                                                    </a>
+                                                }
+                                                else
+                                                {
+                                                    <button class="btn btn-sm btn-outline-secondary" disabled>
+                                                        <i class="fas fa-lock me-1"></i>Enroll to Access
+                                                    </button>
+                                                }
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-4">
+                            <i class="fas fa-book-open text-muted" style="font-size: 3rem; opacity: 0.3;"></i>
+                            <p class="text-muted mt-3">Course content will be available soon.</p>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Reviews Section -->
+            <div class="modern-card shadow-soft scroll-animate">
+                <div class="card-body p-4">
+                    <h3 class="fw-bold mb-4">Student Reviews</h3>
+                    @if (Model.Reviews != null && Model.Reviews.Any())
+                    {
+                        @foreach (var review in Model.Reviews.Take(5))
+                        {
+                            <div class="d-flex mb-4 pb-3 border-bottom">
+                                <div class="avatar-circle me-3" style="width: 40px; height: 40px;">
+                                    @review.Student?.FirstName?.Substring(0, 1)@review.Student?.LastName?.Substring(0, 1)
+                                </div>
+                                <div class="flex-grow-1">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <h6 class="mb-0">@review.Student?.FirstName @review.Student?.LastName</h6>
+                                        <div class="rating-stars">
+                                            @for (int i = 1; i <= 5; i++)
+                                            {
+                                                <i class="fas fa-star @(i <= review.Rating ? "text-warning" : "text-muted")"></i>
+                                            }
+                                        </div>
+                                    </div>
+                                    <p class="text-muted mb-0">@review.Comment</p>
+                                    <small class="text-muted">@review.CreatedAt.ToString("MMM dd, yyyy")</small>
+                                </div>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="text-center py-4">
+                            <i class="fas fa-comments text-muted" style="font-size: 3rem; opacity: 0.3;"></i>
+                            <p class="text-muted mt-3">No reviews yet. Be the first to review this course!</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <!-- Instructor Info -->
+            <div class="modern-card shadow-soft mb-4 scroll-animate">
+                <div class="card-body p-4 text-center">
+                    <div class="avatar-circle mx-auto mb-3" style="width: 80px; height: 80px; font-size: 2rem;">
+                        @Model.Instructor?.FirstName?.Substring(0, 1)@Model.Instructor?.LastName?.Substring(0, 1)
+                    </div>
+                    <h5 class="fw-bold">@Model.Instructor?.FirstName @Model.Instructor?.LastName</h5>
+                    <p class="text-muted mb-3">Course Instructor</p>
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <h6 class="fw-bold text-primary">@(Model.Instructor?.CreatedCourses?.Count ?? 0)</h6>
+                            <small class="text-muted">Courses</small>
+                        </div>
+                        <div class="col-6">
+                            <h6 class="fw-bold text-success">4.9</h6>
+                            <small class="text-muted">Rating</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Related Courses -->
+            <div class="modern-card shadow-soft scroll-animate">
+                <div class="card-body p-4">
+                    <h5 class="fw-bold mb-3">Related Courses</h5>
+                    <!-- Add related courses here -->
+                    <div class="text-center py-3">
+                        <i class="fas fa-book text-muted" style="font-size: 2rem; opacity: 0.3;"></i>
+                        <p class="text-muted mt-2 mb-0">More courses coming soon!</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Smooth scroll for anchor links
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const target = document.querySelector(this.getAttribute('href'));
+                    if (target) {
+                        target.scrollIntoView({ behavior: 'smooth' });
+                    }
+                });
+            });
+
+            // Enhanced enrollment button
+            const enrollBtn = document.querySelector('button[type="submit"]');
+            if (enrollBtn) {
+                enrollBtn.addEventListener('click', function(e) {
+                    this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Enrolling...';
+                });
+            }
+        });
+    </script>
+}

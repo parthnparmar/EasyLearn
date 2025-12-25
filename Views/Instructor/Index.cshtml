@@ -1,0 +1,171 @@
+@model EasyLearn.Models.ViewModels.InstructorDashboardViewModel
+@{
+    ViewData["Title"] = "Instructor Dashboard";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h2>Instructor Dashboard</h2>
+            <p class="text-muted">Manage your courses and track student progress</p>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h5>@Model.TotalCourses</h5>
+                    <p>Total Courses</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h5>@Model.TotalStudents</h5>
+                    <p>Total Students</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h5>$@Model.TotalEarnings.ToString("F2")</h5>
+                    <p>Total Earnings</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <h5>@Model.MyCourses.Count(c => c.IsApproved)</h5>
+                    <p>Approved Courses</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- My Courses -->
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5>My Courses</h5>
+                    <a href="@Url.Action("CreateCourse")" class="btn btn-primary btn-sm">Create New Course</a>
+                </div>
+                <div class="card-body">
+                    @if (Model.MyCourses.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Course</th>
+                                        <th>Students</th>
+                                        <th>Rating</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var course in Model.MyCourses.Take(5))
+                                    {
+                                        <tr>
+                                            <td>
+                                                <strong>@course.Title</strong><br>
+                                                <small class="text-muted">@course.Category.Name</small>
+                                            </td>
+                                            <td>@course.Enrollments.Count</td>
+                                            <td>
+                                                @if (course.Reviews.Any())
+                                                {
+                                                    <span class="text-warning">
+                                                        @course.AverageRating.ToString("F1") ★
+                                                    </span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">No reviews</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                @if (course.IsApproved)
+                                                {
+                                                    <span class="badge bg-success">Approved</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-warning">Pending</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                <div class="btn-group btn-group-sm">
+                                                    <a href="@Url.Action("ManageLessons", new { courseId = course.Id })" class="btn btn-outline-primary">Lessons</a>
+                                                    <a href="@Url.Action("ManageQuizzes", new { courseId = course.Id })" class="btn btn-outline-secondary">Quizzes</a>
+                                                    <a href="@Url.Action("StudentPerformance", new { courseId = course.Id })" class="btn btn-outline-info">Students</a>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="text-center">
+                            <a href="@Url.Action("MyCourses")" class="btn btn-outline-primary">View All Courses</a>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center">
+                            <p class="text-muted">You haven't created any courses yet.</p>
+                            <a href="@Url.Action("CreateCourse")" class="btn btn-primary">Create Your First Course</a>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Enrollments -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Recent Enrollments</h5>
+                </div>
+                <div class="card-body">
+                    @if (Model.RecentEnrollments.Any())
+                    {
+                        @foreach (var enrollment in Model.RecentEnrollments.Take(5))
+                        {
+                            <div class="d-flex justify-content-between align-items-center border-bottom py-2">
+                                <div>
+                                    <h6 class="mb-0">@enrollment.Student.FirstName @enrollment.Student.LastName</h6>
+                                    <small class="text-muted">@enrollment.Course.Title</small>
+                                </div>
+                                <small class="text-muted">@enrollment.EnrolledAt.ToString("MMM dd")</small>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <p class="text-center text-muted">No recent enrollments</p>
+                    }
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5>Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="@Url.Action("CreateCourse")" class="btn btn-primary">Create Course</a>
+                        <a href="@Url.Action("MyCourses")" class="btn btn-outline-primary">Manage Courses</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

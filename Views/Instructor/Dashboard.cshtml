@@ -1,0 +1,453 @@
+@model EasyLearn.Models.ViewModels.InstructorDashboardViewModel
+@{
+    ViewData["Title"] = "Instructor Dashboard";
+    Layout = "_Layout";
+}
+
+<link href="~/css/instructor-dashboard.css" rel="stylesheet" />
+
+<div class="instructor-dashboard">
+    <!-- Profile Completion Reminder -->
+    @if (ViewBag.Profile != null)
+    {
+        <partial name="_ProfileReminder" model="ViewBag.Profile" />
+    }
+    
+    <!-- Header Section -->
+    <div class="dashboard-header">
+        <div class="container-fluid">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <div class="welcome-section">
+                        <h1 class="welcome-title">
+                            <i class="fas fa-chalkboard-teacher"></i>
+                            Welcome back, Instructor!
+                        </h1>
+                        <p class="welcome-subtitle">Manage your courses and track student progress</p>
+                    </div>
+                </div>
+                <div class="col-md-4 text-end">
+                    <div class="quick-actions">
+                        <a href="/instructor/create-course" class="btn btn-primary btn-animated">
+                            <i class="fas fa-plus"></i>
+                            Create Course
+                        </a>
+                        <button class="btn btn-outline-primary btn-animated" data-bs-toggle="modal" data-bs-target="#uploadModal">
+                            <i class="fas fa-upload"></i>
+                            Upload Content
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="container-fluid">
+        <div class="row stats-row">
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="stats-card gradient-primary">
+                    <div class="stats-content">
+                        <div class="stats-icon">
+                            <i class="fas fa-book-open"></i>
+                        </div>
+                        <div class="stats-info">
+                            <div class="stats-number" data-count="@(Model?.TotalCourses ?? 0)">0</div>
+                            <div class="stats-label">Total Courses</div>
+                        </div>
+                    </div>
+                    <div class="stats-progress">
+                        <div class="progress-bar" style="width: 85%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="stats-card gradient-success">
+                    <div class="stats-content">
+                        <div class="stats-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="stats-info">
+                            <div class="stats-number" data-count="@(Model?.TotalStudents ?? 0)">0</div>
+                            <div class="stats-label">Total Students</div>
+                        </div>
+                    </div>
+                    <div class="stats-progress">
+                        <div class="progress-bar" style="width: 92%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="stats-card gradient-info">
+                    <div class="stats-content">
+                        <div class="stats-icon">
+                            <i class="fas fa-dollar-sign"></i>
+                        </div>
+                        <div class="stats-info">
+                            <div class="stats-number" data-count="@((int)(Model?.TotalEarnings ?? 0))">0</div>
+                            <div class="stats-label">Total Earnings</div>
+                        </div>
+                    </div>
+                    <div class="stats-progress">
+                        <div class="progress-bar" style="width: 78%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="stats-card gradient-warning">
+                    <div class="stats-content">
+                        <div class="stats-icon">
+                            <i class="fas fa-certificate"></i>
+                        </div>
+                        <div class="stats-info">
+                            <div class="stats-number" data-count="@(Model?.CertificatesIssued ?? 0)">0</div>
+                            <div class="stats-label">Certificates Issued</div>
+                        </div>
+                    </div>
+                    <div class="stats-progress">
+                        <div class="progress-bar" style="width: 65%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="row">
+            <!-- Course Management -->
+            <div class="col-lg-8">
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <h5 class="card-title">
+                            <i class="fas fa-graduation-cap"></i>
+                            My Courses
+                        </h5>
+                        <div class="card-actions">
+                            <button class="btn btn-sm btn-outline-primary" onclick="toggleView()">
+                                <i class="fas fa-th-large" id="viewIcon"></i>
+                            </button>
+                            <a href="/instructor/my-courses" class="btn btn-sm btn-primary">View All</a>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        @if (Model?.MyCourses?.Any() == true)
+                        {
+                            <div class="courses-container" id="coursesContainer">
+                                @foreach (var course in Model.MyCourses.Take(6))
+                                {
+                                    <div class="course-item">
+                                        <div class="course-thumbnail">
+                                            @if (!string.IsNullOrEmpty(course.ImageUrl))
+                                            {
+                                                <img src="@course.ImageUrl" alt="@course.Title">
+                                            }
+                                            else
+                                            {
+                                                <div class="course-placeholder">
+                                                    <i class="fas fa-book"></i>
+                                                </div>
+                                            }
+                                            <div class="course-status">
+                                                <span class="badge badge-@(course.IsApproved ? "success" : "warning")">
+                                                    @(course.IsApproved ? "Approved" : "Pending")
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div class="course-info">
+                                            <h6 class="course-title">@course.Title</h6>
+                                            <p class="course-category">@(course.Category?.Name ?? "Uncategorized")</p>
+                                            <div class="course-stats">
+                                                <span class="stat-item">
+                                                    <i class="fas fa-users"></i>
+                                                    @(course.Enrollments?.Count ?? 0) students
+                                                </span>
+                                                <span class="stat-item">
+                                                    <i class="fas fa-star"></i>
+                                                    @(course.Reviews?.Any() == true ? course.AverageRating.ToString("F1") : "N/A")
+                                                </span>
+                                            </div>
+                                            <div class="course-actions">
+                                                <a href="/instructor/edit-course/@course.Id" class="btn btn-sm btn-outline-primary" title="Edit Course">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                                <a href="/instructor/manage-lessons/@course.Id" class="btn btn-sm btn-outline-success" title="Manage Lessons">
+                                                    <i class="fas fa-play"></i>
+                                                </a>
+                                                <a href="/instructor/manage-quizzes/@course.Id" class="btn btn-sm btn-outline-info" title="Manage Quizzes">
+                                                    <i class="fas fa-question-circle"></i>
+                                                </a>
+                                                <a href="/instructor/student-performance/@course.Id" class="btn btn-sm btn-outline-warning" title="Student Performance">
+                                                    <i class="fas fa-chart-bar"></i>
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="empty-state">
+                                <div class="empty-icon">
+                                    <i class="fas fa-book-open"></i>
+                                </div>
+                                <h6>No courses yet</h6>
+                                <p>Start creating your first course to share your knowledge!</p>
+                                <a href="/instructor/create-course" class="btn btn-primary">
+                                    <i class="fas fa-plus"></i>
+                                    Create First Course
+                                </a>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="col-lg-4">
+                <!-- Recent Activity -->
+                <div class="dashboard-card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title">
+                            <i class="fas fa-clock"></i>
+                            Recent Activity
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        @if (Model?.RecentEnrollments?.Any() == true)
+                        {
+                            <div class="activity-list">
+                                @foreach (var enrollment in Model.RecentEnrollments.Take(5))
+                                {
+                                    <div class="activity-item">
+                                        <div class="activity-avatar">
+                                            @(enrollment.Student?.FirstName?.FirstOrDefault() ?? 'U')@(enrollment.Student?.LastName?.FirstOrDefault() ?? 'U')
+                                        </div>
+                                        <div class="activity-content">
+                                            <p class="activity-text">
+                                                <strong>@(enrollment.Student?.FirstName ?? "Unknown") @(enrollment.Student?.LastName ?? "User")</strong>
+                                                enrolled in <strong>@(enrollment.Course?.Title ?? "Unknown Course")</strong>
+                                            </p>
+                                            <small class="activity-time">@enrollment.EnrolledAt.ToString("MMM dd, yyyy")</small>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="empty-state-small">
+                                <i class="fas fa-bell"></i>
+                                <p>No recent activity</p>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="dashboard-card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title">
+                            <i class="fas fa-bolt"></i>
+                            Quick Actions
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="quick-actions-grid">
+                            <a href="/instructor/create-course" class="quick-action-item">
+                                <div class="action-icon gradient-primary">
+                                    <i class="fas fa-plus"></i>
+                                </div>
+                                <span>Create Course</span>
+                            </a>
+                            <a href="/instructor/my-courses" class="quick-action-item">
+                                <div class="action-icon gradient-success">
+                                    <i class="fas fa-book"></i>
+                                </div>
+                                <span>Manage Courses</span>
+                            </a>
+                            <button class="quick-action-item" data-bs-toggle="modal" data-bs-target="#uploadModal">
+                                <div class="action-icon gradient-info">
+                                    <i class="fas fa-upload"></i>
+                                </div>
+                                <span>Upload Content</span>
+                            </button>
+                            <button class="quick-action-item" onclick="showAnalytics()">
+                                <div class="action-icon gradient-warning">
+                                    <i class="fas fa-chart-line"></i>
+                                </div>
+                                <span>View Analytics</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quiz Performance Summary -->
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <h5 class="card-title">
+                            <i class="fas fa-chart-pie"></i>
+                            Quiz Performance Summary
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        @if (Model?.QuizPerformance != null)
+                        {
+                            <div class="performance-stats">
+                                <div class="performance-item">
+                                    <div class="performance-icon gradient-info">
+                                        <i class="fas fa-clipboard-list"></i>
+                                    </div>
+                                    <div class="performance-details">
+                                        <div class="performance-number">@Model.QuizPerformance.TotalAttempts</div>
+                                        <div class="performance-label">Total Quiz Attempts</div>
+                                    </div>
+                                </div>
+                                <div class="performance-item">
+                                    <div class="performance-icon gradient-success">
+                                        <i class="fas fa-percentage"></i>
+                                    </div>
+                                    <div class="performance-details">
+                                        <div class="performance-number">@Model.QuizPerformance.AverageScore.ToString("F1")%</div>
+                                        <div class="performance-label">Average Score</div>
+                                    </div>
+                                </div>
+                                <div class="performance-item">
+                                    <div class="performance-icon gradient-warning">
+                                        <i class="fas fa-trophy"></i>
+                                    </div>
+                                    <div class="performance-details">
+                                        <div class="performance-number">@Model.QuizPerformance.PassRate.ToString("F1")%</div>
+                                        <div class="performance-label">Pass Rate</div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="empty-state-small">
+                                <i class="fas fa-chart-pie"></i>
+                                <p>No quiz data available</p>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Certificate Management Section -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <h5 class="card-title">
+                            <i class="fas fa-certificate"></i>
+                            Certificate Management
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="certificate-info">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="certificate-stat">
+                                        <div class="cert-icon">
+                                            <i class="fas fa-award"></i>
+                                        </div>
+                                        <div class="cert-details">
+                                            <h4>@(Model?.CertificatesIssued ?? 0)</h4>
+                                            <p>Certificates Issued</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-8">
+                                    <div class="certificate-criteria">
+                                        <h6>Certificate Issuance Criteria:</h6>
+                                        <ul class="criteria-list">
+                                            <li><i class="fas fa-check-circle text-success"></i> Complete all course lessons</li>
+                                            <li><i class="fas fa-check-circle text-success"></i> Pass all quizzes with minimum score</li>
+                                            <li><i class="fas fa-check-circle text-success"></i> Meet course completion requirements</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Upload Modal -->
+<div class="modal fade" id="uploadModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-upload"></i>
+                    Upload Course Content
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="upload-tabs">
+                    <ul class="nav nav-tabs" role="tablist">
+                        <li class="nav-item">
+                            <a class="nav-link active" data-bs-toggle="tab" href="#video-tab">
+                                <i class="fas fa-video"></i>
+                                Video Lectures
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" data-bs-toggle="tab" href="#materials-tab">
+                                <i class="fas fa-file-pdf"></i>
+                                Study Materials
+                            </a>
+                        </li>
+                    </ul>
+                    <div class="tab-content">
+                        <div class="tab-pane fade show active" id="video-tab">
+                            <form class="upload-form">
+                                <div class="mb-3">
+                                    <label class="form-label">YouTube Video URL</label>
+                                    <input type="url" class="form-control" placeholder="https://www.youtube.com/watch?v=...">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Lesson Title</label>
+                                    <input type="text" class="form-control" placeholder="Enter lesson title">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Description</label>
+                                    <textarea class="form-control" rows="3" placeholder="Enter lesson description"></textarea>
+                                </div>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-plus"></i>
+                                    Add Video Lesson
+                                </button>
+                            </form>
+                        </div>
+                        <div class="tab-pane fade" id="materials-tab">
+                            <form class="upload-form">
+                                <div class="upload-area">
+                                    <div class="upload-icon">
+                                        <i class="fas fa-cloud-upload-alt"></i>
+                                    </div>
+                                    <p>Drag and drop files here or click to browse</p>
+                                    <input type="file" class="file-input" multiple accept=".pdf,.doc,.docx,.ppt,.pptx">
+                                    <button type="button" class="btn btn-outline-primary">Browse Files</button>
+                                </div>
+                                <div class="file-list mt-3"></div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/instructor-dashboard.js"></script>
+}

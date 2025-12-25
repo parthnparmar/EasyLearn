@@ -1,0 +1,241 @@
+@{
+    ViewData["Title"] = "Home";
+}
+
+<!-- Loading Animation -->
+<div class="loading-overlay">
+    <div class="loading-spinner"></div>
+</div>
+
+<!-- Hero Slider Section -->
+<section class="hero-slider">
+    <!-- Slide 1 -->
+    <div class="hero-slide" style="background-image: url('https://images.unsplash.com/photo-1522202176988-66273c2fd55f?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80');">
+        <div class="hero-content">
+            <div class="container">
+                <div class="row align-items-center">
+                    <div class="col-lg-6">
+                        <div class="hero-text slide-in-left">
+                            <h1>Learn Anything, Anytime with EasyLearn</h1>
+                            <p>Join thousands of students and instructors in our comprehensive online learning platform. Create, share, and learn from the best courses available.</p>
+                            <div class="hero-buttons">
+                                @if (User.Identity?.IsAuthenticated == true)
+                                {
+                                    @if (User.IsInRole("Student"))
+                                    {
+                                        <a href="@Url.Action("BrowseCourses", "Student")" class="btn btn-light btn-modern">Browse Courses</a>
+                                        <a href="@Url.Action("Index", "Student")" class="btn btn-outline-light btn-modern">My Dashboard</a>
+                                    }
+                                    else if (User.IsInRole("Instructor"))
+                                    {
+                                        <a href="@Url.Action("CreateCourse", "Instructor")" class="btn btn-light btn-modern">Create Course</a>
+                                        <a href="@Url.Action("Index", "Instructor")" class="btn btn-outline-light btn-modern">My Dashboard</a>
+                                    }
+                                    else if (User.IsInRole("Admin"))
+                                    {
+                                        <a href="@Url.Action("Index", "Admin")" class="btn btn-light btn-modern">Admin Dashboard</a>
+                                    }
+                                }
+                                else
+                                {
+                                    <a href="@Url.Action("Register", "Account")" class="btn btn-light btn-modern">Get Started</a>
+                                    <a href="@Url.Action("Login", "Account")" class="btn btn-outline-light btn-modern">Sign In</a>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6 text-center slide-in-right">
+                        <i class="fas fa-graduation-cap float" style="font-size: 8rem; opacity: 0.8;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 2 -->
+    <div class="hero-slide" style="background-image: url('https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80');">
+        <div class="hero-content">
+            <div class="container">
+                <div class="row align-items-center">
+                    <div class="col-lg-6">
+                        <div class="hero-text slide-in-left">
+                            <h1>Expert Instructors, Quality Content</h1>
+                            <p>Learn from industry experts and experienced educators. Our carefully curated courses ensure you get the best learning experience possible.</p>
+                            <div class="hero-buttons">
+                                <a href="@Url.Action("BrowseCourses", "Student")" class="btn btn-light btn-modern">Explore Courses</a>
+                                <a href="@Url.Action("Register", "Account")" class="btn btn-outline-light btn-modern">Join Now</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6 text-center slide-in-right">
+                        <i class="fas fa-chalkboard-teacher float" style="font-size: 8rem; opacity: 0.8;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 3 -->
+    <div class="hero-slide" style="background-image: url('https://images.unsplash.com/photo-1434030216411-0b793f4b4173?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80');">
+        <div class="hero-content">
+            <div class="container">
+                <div class="row align-items-center">
+                    <div class="col-lg-6">
+                        <div class="hero-text slide-in-left">
+                            <h1>Earn Certificates, Advance Your Career</h1>
+                            <p>Complete courses and earn industry-recognized certificates. Track your progress and showcase your achievements to employers worldwide.</p>
+                            <div class="hero-buttons">
+                                <a href="@Url.Action("Register", "Account")" class="btn btn-light btn-modern">Start Learning</a>
+                                <a href="#features" class="btn btn-outline-light btn-modern">Learn More</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6 text-center slide-in-right">
+                        <i class="fas fa-certificate float" style="font-size: 8rem; opacity: 0.8;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slider Navigation -->
+    <div class="slider-nav">
+        <div class="slider-dot"></div>
+        <div class="slider-dot"></div>
+        <div class="slider-dot"></div>
+    </div>
+
+    <!-- Floating Background Icons -->
+    <i class="fas fa-book floating-icon" style="top: 10%; left: 10%;"></i>
+    <i class="fas fa-laptop floating-icon" style="top: 60%; right: 15%;"></i>
+    <i class="fas fa-lightbulb floating-icon" style="bottom: 20%; left: 20%;"></i>
+</section>
+
+<!-- Features Section -->
+<section id="features" class="py-5">
+    <div class="container">
+        <div class="row text-center mb-5">
+            <div class="col-12">
+                <h2 class="scroll-animate" style="font-size: 2.5rem; font-weight: 700; margin-bottom: 1rem;">Why Choose EasyLearn?</h2>
+                <p class="lead text-muted scroll-animate">Discover the features that make learning effective and enjoyable</p>
+            </div>
+        </div>
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="feature-card scroll-animate">
+                    <div class="feature-icon gradient-primary">
+                        <i class="fas fa-video"></i>
+                    </div>
+                    <h5 style="font-weight: 600; margin-bottom: 1rem;">Video Learning</h5>
+                    <p class="text-muted">Watch high-quality video lectures from expert instructors at your own pace with interactive features.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="feature-card scroll-animate">
+                    <div class="feature-icon gradient-success">
+                        <i class="fas fa-certificate"></i>
+                    </div>
+                    <h5 style="font-weight: 600; margin-bottom: 1rem;">Certificates</h5>
+                    <p class="text-muted">Earn industry-recognized certificates upon course completion to showcase your achievements.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="feature-card scroll-animate">
+                    <div class="feature-icon gradient-info">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h5 style="font-weight: 600; margin-bottom: 1rem;">Progress Tracking</h5>
+                    <p class="text-muted">Monitor your learning progress with detailed analytics and personalized insights.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Stats Section -->
+<section class="stats-section scroll-animate">
+    <div class="container">
+        <div class="row text-center">
+            <div class="col-md-3 mb-4">
+                <div class="stat-item">
+                    <div class="stat-number">1000+</div>
+                    <div class="stat-label">Courses Available</div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-4">
+                <div class="stat-item">
+                    <div class="stat-number">5000+</div>
+                    <div class="stat-label">Active Students</div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-4">
+                <div class="stat-item">
+                    <div class="stat-number">200+</div>
+                    <div class="stat-label">Expert Instructors</div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-4">
+                <div class="stat-item">
+                    <div class="stat-number">50+</div>
+                    <div class="stat-label">Course Categories</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- How it Works Section -->
+<section class="py-5">
+    <div class="container">
+        <div class="row">
+            <div class="col-12 text-center mb-5">
+                <h2 class="scroll-animate" style="font-size: 2.5rem; font-weight: 700; margin-bottom: 1rem;">How It Works</h2>
+                <p class="lead text-muted scroll-animate">Get started in three simple steps</p>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-4">
+                <div class="process-step scroll-animate">
+                    <div class="step-number gradient-primary">1</div>
+                    <h5 style="font-weight: 600; margin-bottom: 1rem;">Sign Up</h5>
+                    <p class="text-muted">Create your account and choose your role - Student or Instructor. It's quick and easy!</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="process-step scroll-animate">
+                    <div class="step-number gradient-success">2</div>
+                    <h5 style="font-weight: 600; margin-bottom: 1rem;">Explore & Enroll</h5>
+                    <p class="text-muted">Browse our extensive course catalog and enroll in courses that match your interests and goals.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="process-step scroll-animate">
+                    <div class="step-number gradient-info">3</div>
+                    <h5 style="font-weight: 600; margin-bottom: 1rem;">Learn & Achieve</h5>
+                    <p class="text-muted">Complete courses, take quizzes, track your progress, and earn certificates.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+@if (User.Identity?.IsAuthenticated != true)
+{
+    <!-- CTA Section -->
+    <section class="py-5">
+        <div class="container">
+            <div class="cta-section scroll-animate">
+                <h3 style="font-size: 2.5rem; font-weight: 700; margin-bottom: 1rem;">Ready to Start Learning?</h3>
+                <p class="lead" style="margin-bottom: 2rem; opacity: 0.9;">Join our community of learners and instructors today!</p>
+                <div class="d-flex justify-content-center gap-3 flex-wrap">
+                    <a href="@Url.Action("Register", "Account")" class="btn btn-light btn-modern">Sign Up as Student</a>
+                    <a href="@Url.Action("Register", "Account")" class="btn btn-outline-light btn-modern">Become an Instructor</a>
+                </div>
+            </div>
+        </div>
+    </section>
+}
+
+@section Scripts {
+    <script src="~/js/modern-aesthetic.js"></script>
+}

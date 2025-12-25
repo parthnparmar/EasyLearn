@@ -1,0 +1,467 @@
+@model EasyLearn.Models.ViewModels.CourseDetailsViewModel
+@{
+    ViewData["Title"] = Model.Course.Title;
+}
+
+<div class="container">
+    <!-- Course Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="@Url.Action("BrowseCourses")">Courses</a></li>
+                    <li class="breadcrumb-item"><a href="@Url.Action("BrowseCourses", new { categoryId = Model.Course.CategoryId })">@Model.Course.Category.Name</a></li>
+                    <li class="breadcrumb-item active">@Model.Course.Title</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Course Info -->
+            <div class="card mb-4">
+                @if (!string.IsNullOrEmpty(Model.Course.ImageUrl))
+                {
+                    <img src="@Model.Course.ImageUrl" class="card-img-top" alt="@Model.Course.Title" style="height: 300px; object-fit: cover;" />
+                }
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div>
+                            <h1 class="card-title">@Model.Course.Title</h1>
+                            <p class="text-muted mb-2">
+                                <i class="fas fa-user"></i> by @Model.Course.Instructor.FirstName @Model.Course.Instructor.LastName
+                            </p>
+                        </div>
+                        <div class="text-end">
+                            @if (Model.Course.IsFeatured)
+                            {
+                                <span class="badge bg-warning text-dark mb-2">Featured</span><br>
+                            }
+                            <span class="badge bg-secondary">@Model.Course.Category.Name</span>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex align-items-center mb-3">
+                        @if (Model.Course.Reviews.Any())
+                        {
+                            <div class="text-warning me-3">
+                                @for (int i = 1; i <= 5; i++)
+                                {
+                                    <i class="fas fa-star@(i <= Model.Course.AverageRating ? "" : "-o")"></i>
+                                }
+                            </div>
+                            <span class="me-3">@Model.Course.AverageRating.ToString("F1") (@Model.Course.Reviews.Count reviews)</span>
+                        }
+                        else
+                        {
+                            <span class="text-muted me-3">No reviews yet</span>
+                        }
+                        <span class="text-muted">
+                            <i class="fas fa-users"></i> @Model.Course.TotalEnrollments students
+                        </span>
+                    </div>
+
+                    <p class="card-text">@Model.Course.Description</p>
+
+                    <!-- Course Stats -->
+                    <div class="row text-center mb-4">
+                        <div class="col-3">
+                            <div class="border rounded p-3">
+                                <h5 class="text-primary mb-1">@Model.Lessons.Count</h5>
+                                <small class="text-muted">Lessons</small>
+                            </div>
+                        </div>
+                        <div class="col-3">
+                            <div class="border rounded p-3">
+                                <h5 class="text-primary mb-1">@Model.Course.Quizzes.Count</h5>
+                                <small class="text-muted">Quizzes</small>
+                            </div>
+                        </div>
+                        <div class="col-3">
+                            <div class="border rounded p-3">
+                                <h5 class="text-primary mb-1">@TimeSpan.FromTicks(Model.Lessons.Sum(l => l.Duration.Ticks)).ToString(@"hh\:mm")</h5>
+                                <small class="text-muted">Duration</small>
+                            </div>
+                        </div>
+                        <div class="col-3">
+                            <div class="border rounded p-3">
+                                <h5 class="text-primary mb-1">@Model.Course.ViewCount</h5>
+                                <small class="text-muted">Views</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    @if (Model.IsEnrolled)
+                    {
+                        <!-- Progress Section -->
+                        <div class="alert alert-success">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h6 class="mb-0"><i class="fas fa-chart-line"></i> Your Progress</h6>
+                                <span class="badge bg-success">@Model.ProgressPercentage.ToString("F1")%</span>
+                            </div>
+                            <div class="progress mb-2" style="height: 10px;">
+                                <div class="progress-bar bg-success" role="progressbar" 
+                                     style="width: @Model.ProgressPercentage%"
+                                     aria-valuenow="@Model.ProgressPercentage" 
+                                     aria-valuemin="0" 
+                                     aria-valuemax="100">
+                                </div>
+                            </div>
+                            <small>@Model.CompletedLessons of @Model.Lessons.Count lessons completed</small>
+                            
+                            @if (Model.CurrentLesson != null)
+                            {
+                                <div class="mt-2">
+                                    <a href="@Url.Action("WatchLesson", new { lessonId = Model.CurrentLesson.Id })" 
+                                       class="btn btn-success btn-sm">
+                                        <i class="fas fa-play"></i> Continue Learning
+                                    </a>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Course Content -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-list"></i> Course Content</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="accordion" id="courseContent">
+                        @for (int i = 0; i < Model.Lessons.Count; i++)
+                        {
+                            var lesson = Model.Lessons[i];
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="heading@lesson.Id">
+                                    <button class="accordion-button @(i == 0 ? "" : "collapsed")" type="button" 
+                                            data-bs-toggle="collapse" data-bs-target="#collapse@lesson.Id" 
+                                            aria-expanded="@(i == 0 ? "true" : "false")" aria-controls="collapse@lesson.Id">
+                                        <div class="d-flex justify-content-between align-items-center w-100 me-3">
+                                            <div>
+                                                <strong>@(i + 1). @lesson.Title</strong>
+                                                <br><small class="text-muted">Duration: @lesson.Duration.ToString(@"mm\:ss")</small>
+                                            </div>
+                                            <div>
+                                                @if (Model.IsEnrolled)
+                                                {
+                                                    <!-- Show completion status -->
+                                                    <i class="fas fa-check-circle text-success"></i>
+                                                }
+                                                else
+                                                {
+                                                    <i class="fas fa-lock text-muted"></i>
+                                                }
+                                            </div>
+                                        </div>
+                                    </button>
+                                </h2>
+                                <div id="collapse@lesson.Id" class="accordion-collapse collapse @(i == 0 ? "show" : "")" 
+                                     aria-labelledby="heading@lesson.Id" data-bs-parent="#courseContent">
+                                    <div class="accordion-body">
+                                        <p>@lesson.Description</p>
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div>
+                                                @if (!string.IsNullOrEmpty(lesson.MaterialUrl))
+                                                {
+                                                    @if (Model.IsEnrolled)
+                                                    {
+                                                        <a href="@Url.Action("DownloadMaterial", new { lessonId = lesson.Id })" 
+                                                           class="btn btn-outline-primary btn-sm me-2" target="_blank">
+                                                            <i class="fas fa-download"></i> Materials
+                                                        </a>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="text-muted">
+                                                            <i class="fas fa-file"></i> Materials available
+                                                        </span>
+                                                    }
+                                                }
+                                            </div>
+                                            <div>
+                                                @if (Model.IsEnrolled)
+                                                {
+                                                    <a href="@Url.Action("WatchLesson", new { lessonId = lesson.Id })" 
+                                                       class="btn btn-primary btn-sm">
+                                                        <i class="fas fa-play"></i> Watch
+                                                    </a>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">
+                                                        <i class="fas fa-lock"></i> Enroll to access
+                                                    </span>
+                                                }
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quizzes -->
+            @if (Model.Course.Quizzes.Any())
+            {
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-question-circle"></i> Course Quizzes</h5>
+                    </div>
+                    <div class="card-body">
+                        @foreach (var quiz in Model.Course.Quizzes)
+                        {
+                            <div class="d-flex justify-content-between align-items-center border-bottom py-2">
+                                <div>
+                                    <h6>@quiz.Title</h6>
+                                    <small class="text-muted">@quiz.Description</small>
+                                </div>
+                                <div>
+                                    @if (Model.IsEnrolled)
+                                    {
+                                        <a href="@Url.Action("TakeQuiz", new { quizId = quiz.Id })" 
+                                           class="btn btn-outline-primary btn-sm">
+                                            <i class="fas fa-play"></i> Take Quiz
+                                        </a>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">
+                                            <i class="fas fa-lock"></i> Enroll to access
+                                        </span>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+
+            <!-- Reviews Section -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-star"></i> Student Reviews</h5>
+                </div>
+                <div class="card-body">
+                    @if (Model.CanReview)
+                    {
+                        <div class="alert alert-info">
+                            <h6><i class="fas fa-edit"></i> Share Your Experience</h6>
+                            <form asp-action="AddReview" method="post">
+                                <input type="hidden" name="CourseId" value="@Model.Course.Id" />
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Rating</label>
+                                        <select name="Rating" class="form-select" required>
+                                            <option value="">Select rating</option>
+                                            <option value="5">⭐⭐⭐⭐⭐ Excellent</option>
+                                            <option value="4">⭐⭐⭐⭐ Very Good</option>
+                                            <option value="3">⭐⭐⭐ Good</option>
+                                            <option value="2">⭐⭐ Fair</option>
+                                            <option value="1">⭐ Poor</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-12 mb-3">
+                                        <label class="form-label">Comment</label>
+                                        <textarea name="Comment" class="form-control" rows="3" 
+                                                  placeholder="Share your experience with this course..."></textarea>
+                                    </div>
+                                    <div class="col-12">
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-paper-plane"></i> Submit Review
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    }
+
+                    @if (Model.Reviews.Any())
+                    {
+                        @foreach (var review in Model.Reviews.Take(5))
+                        {
+                            <div class="border-bottom py-3">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <strong>@review.Student.FirstName @review.Student.LastName</strong>
+                                        <div class="text-warning my-1">
+                                            @for (int i = 1; i <= 5; i++)
+                                            {
+                                                <i class="fas fa-star@(i <= review.Rating ? "" : "-o")"></i>
+                                            }
+                                        </div>
+                                        <p class="mb-0">@review.Comment</p>
+                                    </div>
+                                    <small class="text-muted">@review.CreatedAt.ToString("MMM dd, yyyy")</small>
+                                </div>
+                            </div>
+                        }
+                        
+                        @if (Model.Reviews.Count > 5)
+                        {
+                            <div class="text-center mt-3">
+                                <button class="btn btn-outline-secondary" onclick="loadMoreReviews()">
+                                    <i class="fas fa-chevron-down"></i> Show More Reviews
+                                </button>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="text-center py-4">
+                            <i class="fas fa-star fa-2x text-muted mb-3"></i>
+                            <p class="text-muted">No reviews yet. Be the first to review this course!</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Enrollment Card -->
+            <div class="card mb-4 sticky-top" style="top: 20px;">
+                <div class="card-body text-center">
+                    @if (Model.Course.IsFree)
+                    {
+                        <h3 class="text-success mb-3">Free Course</h3>
+                    }
+                    else
+                    {
+                        <h3 class="text-primary mb-3">$@Model.Course.Price</h3>
+                    }
+
+                    @if (Model.IsEnrolled)
+                    {
+                        <div class="alert alert-success">
+                            <i class="fas fa-check-circle"></i> You're enrolled!
+                        </div>
+                        
+                        @if (Model.ProgressPercentage == 100)
+                        {
+                            <a href="@Url.Action("DownloadCertificate", new { courseId = Model.Course.Id })" 
+                               class="btn btn-success w-100 mb-2">
+                                <i class="fas fa-certificate"></i> Download Certificate
+                            </a>
+                        }
+                        
+                        <a href="@Url.Action("MyCourses")" class="btn btn-outline-primary w-100 mb-2">
+                            <i class="fas fa-book-open"></i> Go to My Courses
+                        </a>
+                        
+                        @if (Model.CurrentLesson != null)
+                        {
+                            <a href="@Url.Action("WatchLesson", new { lessonId = Model.CurrentLesson.Id })" 
+                               class="btn btn-primary w-100">
+                                <i class="fas fa-play"></i> Continue Learning
+                            </a>
+                        }
+                    }
+                    else if (Model.CanEnroll)
+                    {
+                        <form asp-action="EnrollCourse" method="post">
+                            <input type="hidden" name="courseId" value="@Model.Course.Id" />
+                            <button type="submit" class="btn btn-primary w-100 btn-lg">
+                                <i class="fas fa-graduation-cap"></i> 
+                                @(Model.Course.IsFree ? "Enroll for Free" : "Enroll Now")
+                            </button>
+                        </form>
+                        
+                        @if (!Model.Course.IsFree)
+                        {
+                            <small class="text-muted d-block mt-2">
+                                <i class="fas fa-shield-alt"></i> 30-day money-back guarantee
+                            </small>
+                        }
+                    }
+                    else
+                    {
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle"></i> Enrollment not available
+                        </div>
+                    }
+
+                    <hr>
+                    
+                    <!-- Course Features -->
+                    <div class="text-start">
+                        <h6><i class="fas fa-check-circle text-success"></i> This course includes:</h6>
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-video text-primary"></i> @Model.Lessons.Count video lessons</li>
+                            <li><i class="fas fa-question-circle text-primary"></i> @Model.Course.Quizzes.Count quizzes</li>
+                            <li><i class="fas fa-download text-primary"></i> Downloadable resources</li>
+                            <li><i class="fas fa-certificate text-primary"></i> Certificate of completion</li>
+                            <li><i class="fas fa-infinity text-primary"></i> Lifetime access</li>
+                            <li><i class="fas fa-mobile-alt text-primary"></i> Access on mobile and desktop</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Related Courses -->
+            @if (Model.RelatedCourses.Any())
+            {
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="mb-0"><i class="fas fa-lightbulb"></i> You might also like</h6>
+                    </div>
+                    <div class="card-body p-0">
+                        @foreach (var relatedCourse in Model.RelatedCourses)
+                        {
+                            <div class="border-bottom p-3">
+                                <h6 class="mb-1">
+                                    <a href="@Url.Action("CourseDetails", new { id = relatedCourse.Id })" 
+                                       class="text-decoration-none">
+                                        @relatedCourse.Title
+                                    </a>
+                                </h6>
+                                <small class="text-muted d-block mb-2">
+                                    @relatedCourse.Instructor.FirstName @relatedCourse.Instructor.LastName
+                                </small>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    @if (relatedCourse.Reviews.Any())
+                                    {
+                                        <div class="text-warning">
+                                            @for (int i = 1; i <= 5; i++)
+                                            {
+                                                <i class="fas fa-star@(i <= relatedCourse.AverageRating ? "" : "-o") fa-sm"></i>
+                                            }
+                                            <small class="text-muted ms-1">(@relatedCourse.Reviews.Count)</small>
+                                        </div>
+                                    }
+                                    <strong class="@(relatedCourse.IsFree ? "text-success" : "text-primary")">
+                                        @(relatedCourse.IsFree ? "Free" : "$" + relatedCourse.Price)
+                                    </strong>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function loadMoreReviews() {
+            // Implementation for loading more reviews via AJAX
+            alert('Load more reviews functionality would be implemented here');
+        }
+
+        $(document).ready(function() {
+            // Smooth scrolling for course content
+            $('.accordion-button').click(function() {
+                setTimeout(function() {
+                    $('html, body').animate({
+                        scrollTop: $(this).offset().top - 100
+                    }, 500);
+                }.bind(this), 300);
+            });
+        });
+    </script>
+}

@@ -1,0 +1,207 @@
+@model IEnumerable<Course>
+@{
+    ViewData["Title"] = "Browse Courses";
+}
+
+<div class="container-fluid py-5" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); min-height: 100vh;">
+    <div class="container">
+        <!-- Header Section -->
+        <div class="row mb-5">
+            <div class="col-12 text-center">
+                <h1 class="display-4 fw-bold scroll-animate" style="color: #495057;">Discover Amazing Courses</h1>
+                <p class="lead text-muted scroll-animate">Explore our comprehensive collection of courses designed by expert instructors</p>
+            </div>
+        </div>
+
+        <!-- Search and Filter Section -->
+        <div class="row mb-5">
+            <div class="col-12">
+                <div class="modern-card shadow-soft scroll-animate">
+                    <div class="card-body p-4">
+                        <form method="get" class="row g-3">
+                            <div class="col-md-4">
+                                <div class="form-floating">
+                                    <input type="text" class="form-control" id="searchTerm" name="searchTerm" 
+                                           value="@ViewBag.SearchTerm" placeholder="Search courses...">
+                                    <label for="searchTerm"><i class="fas fa-search me-2"></i>Search courses...</label>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-floating">
+                                    <select class="form-select" id="categoryId" name="categoryId">
+                                        <option value="">All Categories</option>
+                                        @if (ViewBag.Categories != null)
+                                        {
+                                            @foreach (var category in ViewBag.Categories)
+                                            {
+                                                <option value="@category.Id" selected="@(ViewBag.CategoryId == category.Id.ToString())">
+                                                    @category.Name
+                                                </option>
+                                            }
+                                        }
+                                    </select>
+                                    <label for="categoryId"><i class="fas fa-tags me-2"></i>Category</label>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-floating">
+                                    <select class="form-select" id="priceFilter" name="priceFilter">
+                                        <option value="">All Prices</option>
+                                        <option value="free" selected="@(ViewBag.PriceFilter == "free")">Free</option>
+                                        <option value="paid" selected="@(ViewBag.PriceFilter == "paid")">Paid</option>
+                                    </select>
+                                    <label for="priceFilter"><i class="fas fa-dollar-sign me-2"></i>Price</label>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <button type="submit" class="btn btn-modern gradient-primary w-100 h-100">
+                                    <i class="fas fa-search me-2"></i>Search
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Courses Grid -->
+        <div class="row g-4">
+            @if (Model != null && Model.Any())
+            {
+                @foreach (var course in Model)
+                {
+                    <div class="col-lg-4 col-md-6">
+                        <div class="course-card-modern scroll-animate">
+                            <div class="position-relative">
+                                @if (!string.IsNullOrEmpty(course.ThumbnailUrl))
+                                {
+                                    <img src="@course.ThumbnailUrl" class="card-img-top" alt="@course.Title">
+                                }
+                                else
+                                {
+                                    <div class="card-img-top d-flex align-items-center justify-content-center gradient-primary" style="height: 200px;">
+                                        <i class="fas fa-book text-white" style="font-size: 3rem;"></i>
+                                    </div>
+                                }
+                                
+                                <div class="course-price">
+                                    @if (course.Price == 0)
+                                    {
+                                        <span class="badge bg-success">Free</span>
+                                    }
+                                    else
+                                    {
+                                        <span>$@course.Price.ToString("F2")</span>
+                                    }
+                                </div>
+                            </div>
+                            
+                            <div class="card-body p-4">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <span class="badge gradient-info text-white">@course.Category?.Name</span>
+                                    <div class="rating-stars">
+                                        @for (int i = 1; i <= 5; i++)
+                                        {
+                                            <i class="fas fa-star"></i>
+                                        }
+                                        <small class="text-muted ms-1">(4.8)</small>
+                                    </div>
+                                </div>
+                                
+                                <h5 class="card-title fw-bold mb-2">@course.Title</h5>
+                                <p class="card-text text-muted mb-3">@course.Description?.Substring(0, Math.Min(course.Description.Length, 100))...</p>
+                                
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="avatar-circle me-2" style="width: 30px; height: 30px; font-size: 0.8rem;">
+                                        @course.Instructor?.FirstName?.Substring(0, 1)@course.Instructor?.LastName?.Substring(0, 1)
+                                    </div>
+                                    <small class="text-muted">@course.Instructor?.FirstName @course.Instructor?.LastName</small>
+                                </div>
+                                
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div class="d-flex align-items-center text-muted">
+                                        <i class="fas fa-users me-1"></i>
+                                        <small>@course.Enrollments?.Count() students</small>
+                                    </div>
+                                    <div class="d-flex align-items-center text-muted">
+                                        <i class="fas fa-clock me-1"></i>
+                                        <small>@course.Lessons?.Count() lessons</small>
+                                    </div>
+                                </div>
+                                
+                                <div class="mt-3 d-grid gap-2">
+                                    <a href="@Url.Action("CourseDetails", "Student", new { id = course.Id })" 
+                                       class="btn btn-modern gradient-primary">
+                                        <i class="fas fa-eye me-2"></i>View Details
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="col-12">
+                    <div class="text-center py-5">
+                        <i class="fas fa-search text-muted" style="font-size: 4rem; opacity: 0.3;"></i>
+                        <h3 class="mt-3 text-muted">No courses found</h3>
+                        <p class="text-muted">Try adjusting your search criteria or browse all courses.</p>
+                        <a href="@Url.Action("BrowseCourses", "Student")" class="btn btn-modern gradient-primary">
+                            <i class="fas fa-refresh me-2"></i>View All Courses
+                        </a>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- Load More Section -->
+        @if (Model != null && Model.Any())
+        {
+            <div class="row mt-5">
+                <div class="col-12 text-center">
+                    <button class="btn btn-modern btn-outline-primary btn-lg" id="loadMoreBtn">
+                        <i class="fas fa-plus me-2"></i>Load More Courses
+                    </button>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Enhanced search functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            // Auto-submit form on filter change
+            document.getElementById('categoryId').addEventListener('change', function() {
+                this.form.submit();
+            });
+            
+            document.getElementById('priceFilter').addEventListener('change', function() {
+                this.form.submit();
+            });
+
+            // Load more functionality (placeholder)
+            const loadMoreBtn = document.getElementById('loadMoreBtn');
+            if (loadMoreBtn) {
+                loadMoreBtn.addEventListener('click', function() {
+                    // Implement load more functionality
+                    this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Loading...';
+                    
+                    setTimeout(() => {
+                        this.innerHTML = '<i class="fas fa-plus me-2"></i>Load More Courses';
+                        showToast('More courses loaded!', 'success');
+                    }, 1500);
+                });
+            }
+
+            // Enhanced card animations
+            const cards = document.querySelectorAll('.course-card-modern');
+            cards.forEach((card, index) => {
+                card.style.animationDelay = `${index * 0.1}s`;
+                card.classList.add('fade-in');
+            });
+        });
+    </script>
+}

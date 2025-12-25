@@ -1,0 +1,77 @@
+@model List<EasyLearn.Models.Course>
+@{
+    ViewData["Title"] = "Browse Courses";
+}
+
+<link rel="stylesheet" href="~/css/premium-courses.css" />
+
+<div class="container py-4">
+    <!-- Search & Filter -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <input type="text" id="courseSearch" class="form-control" placeholder="Search courses...">
+        </div>
+        <div class="col-md-4">
+            <select id="categoryFilter" class="form-select">
+                <option value="">All Categories</option>
+                @foreach (var category in (ViewBag.Categories as List<EasyLearn.Models.Category>) ?? new List<EasyLearn.Models.Category>())
+                {
+                    <option value="@category.Id">@category.Name</option>
+                }
+            </select>
+        </div>
+    </div>
+
+    <!-- Courses Grid -->
+    <div class="courses-grid">
+        @foreach (var course in Model)
+        {
+            <div class="course-card" data-category="@course.CategoryId">
+                <div class="course-image">
+                    @if (!string.IsNullOrEmpty(course.ThumbnailUrl))
+                    {
+                        <img src="@course.ThumbnailUrl" alt="@course.Title">
+                    }
+                    else
+                    {
+                        <div class="d-flex align-items-center justify-content-center h-100 text-white">
+                            <i class="fas fa-play-circle fa-3x"></i>
+                        </div>
+                    }
+                    
+                    <div class="play-overlay">
+                        <div class="play-btn">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="course-body">
+                    <h5 class="course-title">@course.Title</h5>
+                    <p class="text-muted mb-2">@course.Description.Substring(0, Math.Min(80, course.Description.Length))...</p>
+                    
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="course-price @(course.IsFree ? "free" : "")">
+                            @if (course.IsFree)
+                            {
+                                <span>FREE</span>
+                            }
+                            else
+                            {
+                                <span>$@course.Price</span>
+                            }
+                        </div>
+                        
+                        <a href="/student/course/@course.Id" class="btn btn-premium btn-sm">
+                            View Course
+                        </a>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/premium-courses.js"></script>
+}

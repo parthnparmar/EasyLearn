@@ -1,0 +1,75 @@
+@model EasyLearn.Models.ViewModels.CourseCreateViewModel
+@{
+    ViewData["Title"] = "Edit Course";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">Edit Course</h4>
+                </div>
+                <div class="card-body">
+                    <form asp-action="EditCourse" asp-route-id="@ViewBag.CourseId" method="post">
+                        <div class="mb-3">
+                            <label asp-for="Title" class="form-label">Course Title</label>
+                            <input asp-for="Title" class="form-control" placeholder="Enter course title">
+                            <span asp-validation-for="Title" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Description" class="form-label">Description</label>
+                            <textarea asp-for="Description" class="form-control" rows="4" placeholder="Describe your course"></textarea>
+                            <span asp-validation-for="Description" class="text-danger"></span>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="CategoryId" class="form-label">Category</label>
+                                    <select asp-for="CategoryId" class="form-select">
+                                        <option value="">Select Category</option>
+                                        @foreach (var category in (ViewBag.Categories as List<EasyLearn.Models.Category>) ?? new List<EasyLearn.Models.Category>())
+                                        {
+                                            <option value="@category.Id">@category.Name</option>
+                                        }
+                                    </select>
+                                    <span asp-validation-for="CategoryId" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="Price" class="form-label">Price ($)</label>
+                                    <input asp-for="Price" type="number" step="0.01" min="0" class="form-control" placeholder="0.00">
+                                    <span asp-validation-for="Price" class="text-danger"></span>
+                                    <small class="form-text text-muted">Set to 0 for free course</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="ImageUrl" class="form-label">Course Image URL (Optional)</label>
+                            <input asp-for="ImageUrl" type="url" class="form-control" placeholder="https://example.com/image.jpg">
+                            <span asp-validation-for="ImageUrl" class="text-danger"></span>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a asp-action="MyCourses" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Back to My Courses
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Update Course
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

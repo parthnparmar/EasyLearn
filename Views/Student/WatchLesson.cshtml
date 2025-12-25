@@ -1,0 +1,167 @@
+@model EasyLearn.Models.Lesson
+@{
+    ViewData["Title"] = "Watch Lesson - " + Model.Title;
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <!-- Video Player Section -->
+        <div class="col-lg-8">
+            <div class="modern-card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-play-circle"></i> @Model.Title
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    @if (!string.IsNullOrEmpty(Model.VideoUrl))
+                    {
+                        <div class="video-container">
+                            @if (Model.VideoUrl.Contains("youtube.com") || Model.VideoUrl.Contains("youtu.be"))
+                            {
+                                string videoId = "";
+                                if (Model.VideoUrl.Contains("youtube.com/watch?v="))
+                                {
+                                    videoId = Model.VideoUrl.Split("v=")[1].Split("&")[0];
+                                }
+                                else if (Model.VideoUrl.Contains("youtu.be/"))
+                                {
+                                    videoId = Model.VideoUrl.Split("youtu.be/")[1].Split("?")[0];
+                                }
+                                <iframe width="100%" height="400" 
+                                        src="https://www.youtube.com/embed/@videoId" 
+                                        frameborder="0" 
+                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                                        allowfullscreen>
+                                </iframe>
+                            }
+                            else
+                            {
+                                <video width="100%" height="400" controls>
+                                    <source src="@Model.VideoUrl" type="video/mp4">
+                                    Your browser does not support the video tag.
+                                </video>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-5">
+                            <i class="fas fa-video fa-3x text-muted mb-3"></i>
+                            <h5>No Video Available</h5>
+                            <p class="text-muted">This lesson doesn't have a video yet.</p>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Lesson Description -->
+            <div class="modern-card mt-4">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-info-circle"></i> Lesson Description</h6>
+                </div>
+                <div class="card-body">
+                    <p>@Model.Description</p>
+                    
+                    @if (!string.IsNullOrEmpty(Model.MaterialUrl))
+                    {
+                        <div class="mt-3">
+                            <a href="@Model.MaterialUrl" target="_blank" class="btn btn-outline-primary">
+                                <i class="fas fa-download"></i> Download Materials
+                            </a>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Mark as Complete -->
+            <div class="modern-card mt-4">
+                <div class="card-body text-center">
+                    <button id="completeBtn" class="btn btn-success btn-lg" onclick="markAsComplete()">
+                        <i class="fas fa-check-circle"></i> Mark as Complete
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Course Navigation -->
+        <div class="col-lg-4">
+            <div class="modern-card">
+                <div class="card-header bg-info text-white">
+                    <h6 class="mb-0">
+                        <i class="fas fa-list"></i> Course: @Model.Course.Title
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="lesson-navigation">
+                        <!-- This would be populated with other lessons from the course -->
+                        <div class="text-center">
+                            <a href="/student/course/@Model.CourseId" class="btn btn-outline-primary">
+                                <i class="fas fa-arrow-left"></i> Back to Course
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Lesson Info -->
+            <div class="modern-card mt-4">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-clock"></i> Lesson Info</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-6">
+                            <strong>Duration:</strong><br>
+                            <span class="text-muted">@Model.Duration.ToString(@"mm\:ss")</span>
+                        </div>
+                        <div class="col-6">
+                            <strong>Order:</strong><br>
+                            <span class="text-muted">Lesson @Model.OrderIndex</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function markAsComplete() {
+            $.ajax({
+                url: '/student/complete-lesson/@Model.Id',
+                type: 'POST',
+                headers: {
+                    'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                },
+                success: function(response) {
+                    $('#completeBtn').removeClass('btn-success').addClass('btn-secondary')
+                                   .html('<i class="fas fa-check"></i> Completed')
+                                   .prop('disabled', true);
+                    
+                    showNotification('Lesson marked as complete!', 'success');
+                },
+                error: function() {
+                    showNotification('Error marking lesson as complete', 'error');
+                }
+            });
+        }
+
+        function showNotification(message, type) {
+            const notification = $(`
+                <div class="notification ${type}">
+                    <i class="fas fa-${type === 'success' ? 'check' : 'exclamation'}-circle me-2"></i>
+                    ${message}
+                </div>
+            `);
+            
+            $('body').append(notification);
+            setTimeout(() => notification.addClass('show'), 100);
+            setTimeout(() => {
+                notification.removeClass('show');
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+    </script>
+}

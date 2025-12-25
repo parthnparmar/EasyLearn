@@ -1,0 +1,378 @@
+@model EasyLearn.Models.Course
+@{
+    ViewData["Title"] = "Manage Lessons - " + Model.Title;
+    Layout = "_Layout";
+}
+
+<link href="~/css/lesson-management.css" rel="stylesheet" />
+
+<div class="lesson-management-container">
+    <div class="container-fluid">
+        <!-- Header -->
+        <div class="management-header">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item"><a href="/instructor/dashboard">Dashboard</a></li>
+                            <li class="breadcrumb-item"><a href="/instructor/my-courses">My Courses</a></li>
+                            <li class="breadcrumb-item active">Manage Lessons</li>
+                        </ol>
+                    </nav>
+                    <h1 class="management-title">
+                        <i class="fas fa-play-circle"></i>
+                        Manage Lessons
+                    </h1>
+                    <p class="management-subtitle">@Model.Title</p>
+                </div>
+                <div class="col-md-4 text-end">
+                    <button class="btn btn-primary btn-animated" data-bs-toggle="modal" data-bs-target="#addLessonModal">
+                        <i class="fas fa-plus"></i>
+                        Add New Lesson
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Course Stats -->
+        <div class="row stats-row">
+            <div class="col-md-3">
+                <div class="stats-card gradient-primary">
+                    <div class="stats-icon">
+                        <i class="fas fa-play"></i>
+                    </div>
+                    <div class="stats-info">
+                        <div class="stats-number">@Model.Lessons.Count</div>
+                        <div class="stats-label">Total Lessons</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card gradient-success">
+                    <div class="stats-icon">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="stats-info">
+                        <div class="stats-number">@(Model.Lessons.Sum(l => l.Duration.TotalMinutes).ToString("F0"))</div>
+                        <div class="stats-label">Total Minutes</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card gradient-info">
+                    <div class="stats-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="stats-info">
+                        <div class="stats-number">@Model.Enrollments.Count</div>
+                        <div class="stats-label">Enrolled Students</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card gradient-warning">
+                    <div class="stats-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div class="stats-info">
+                        <div class="stats-number">85%</div>
+                        <div class="stats-label">Completion Rate</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lessons List -->
+        <div class="lessons-section">
+            <div class="section-header">
+                <h3><i class="fas fa-list"></i> Course Lessons</h3>
+                <div class="section-actions">
+                    <button class="btn btn-outline-secondary btn-sm" onclick="toggleView()">
+                        <i class="fas fa-th-large" id="viewIcon"></i>
+                    </button>
+                    <button class="btn btn-outline-primary btn-sm" onclick="reorderLessons()">
+                        <i class="fas fa-sort"></i>
+                        Reorder
+                    </button>
+                </div>
+            </div>
+
+            @if (Model.Lessons.Any())
+            {
+                <div class="lessons-container" id="lessonsContainer">
+                    @foreach (var lesson in Model.Lessons.OrderBy(l => l.OrderIndex))
+                    {
+                        <div class="lesson-card" data-lesson-id="@lesson.Id">
+                            <div class="lesson-drag-handle">
+                                <i class="fas fa-grip-vertical"></i>
+                            </div>
+                            
+                            <div class="lesson-thumbnail">
+                                @if (!string.IsNullOrEmpty(lesson.VideoUrl))
+                                {
+                                    <div class="video-thumbnail">
+                                        <img src="@GetYouTubeThumbnail(lesson.VideoUrl)" alt="@lesson.Title" />
+                                        <div class="play-overlay">
+                                            <i class="fas fa-play"></i>
+                                        </div>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="placeholder-thumbnail">
+                                        <i class="fas fa-video"></i>
+                                    </div>
+                                }
+                            </div>
+
+                            <div class="lesson-content">
+                                <div class="lesson-header">
+                                    <div class="lesson-number">@lesson.OrderIndex</div>
+                                    <div class="lesson-info">
+                                        <h5 class="lesson-title">@lesson.Title</h5>
+                                        <p class="lesson-description">@lesson.Description</p>
+                                    </div>
+                                    <div class="lesson-status">
+                                        @if (lesson.IsActive)
+                                        {
+                                            <span class="badge badge-success">Published</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge badge-warning">Draft</span>
+                                        }
+                                    </div>
+                                </div>
+
+                                <div class="lesson-meta">
+                                    <div class="meta-item">
+                                        <i class="fas fa-clock"></i>
+                                        <span>@lesson.Duration.ToString(@"mm\:ss")</span>
+                                    </div>
+                                    @if (!string.IsNullOrEmpty(lesson.MaterialUrl))
+                                    {
+                                        <div class="meta-item">
+                                            <i class="fas fa-file-pdf"></i>
+                                            <span>Materials</span>
+                                        </div>
+                                    }
+                                    <div class="meta-item">
+                                        <i class="fas fa-eye"></i>
+                                        <span>245 views</span>
+                                    </div>
+                                </div>
+
+                                <div class="lesson-actions">
+                                    <button class="btn btn-sm btn-outline-primary" onclick="editLesson(@lesson.Id)">
+                                        <i class="fas fa-edit"></i>
+                                        Edit
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-success" onclick="previewLesson(@lesson.Id)">
+                                        <i class="fas fa-eye"></i>
+                                        Preview
+                                    </button>
+                                    <div class="dropdown">
+                                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
+                                            <i class="fas fa-ellipsis-v"></i>
+                                        </button>
+                                        <ul class="dropdown-menu">
+                                            <li><a class="dropdown-item" href="#" onclick="duplicateLesson(@lesson.Id)">
+                                                <i class="fas fa-copy"></i> Duplicate
+                                            </a></li>
+                                            <li><a class="dropdown-item" href="#" onclick="toggleLessonStatus(@lesson.Id)">
+                                                <i class="fas fa-@(lesson.IsActive ? "eye-slash" : "eye")"></i> 
+                                                @(lesson.IsActive ? "Unpublish" : "Publish")
+                                            </a></li>
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li><a class="dropdown-item text-danger" href="#" onclick="deleteLesson(@lesson.Id)">
+                                                <i class="fas fa-trash"></i> Delete
+                                            </a></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="empty-state">
+                    <div class="empty-icon">
+                        <i class="fas fa-video"></i>
+                    </div>
+                    <h4>No lessons yet</h4>
+                    <p>Start building your course by adding your first lesson</p>
+                    <button class="btn btn-primary btn-lg" data-bs-toggle="modal" data-bs-target="#addLessonModal">
+                        <i class="fas fa-plus"></i>
+                        Add First Lesson
+                    </button>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Add Lesson Modal -->
+<div class="modal fade" id="addLessonModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus-circle"></i>
+                    Add New Lesson
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form asp-action="CreateLesson" method="post" id="lessonForm">
+                <input type="hidden" name="CourseId" value="@Model.Id" />
+                <input type="hidden" name="OrderIndex" value="@(Model.Lessons.Count + 1)" />
+                
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="form-group">
+                                <label class="form-label">Lesson Title *</label>
+                                <input type="text" name="Title" class="form-control form-control-modern" 
+                                       placeholder="Enter lesson title" required maxlength="200">
+                                <div class="form-help">
+                                    <small class="text-muted">Clear and descriptive title</small>
+                                    <span class="char-count">0/200</span>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Description</label>
+                                <textarea name="Description" class="form-control form-control-modern" 
+                                          rows="3" placeholder="What will students learn in this lesson?"
+                                          maxlength="500"></textarea>
+                                <div class="form-help">
+                                    <small class="text-muted">Brief description of lesson content</small>
+                                    <span class="char-count">0/500</span>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-8">
+                                    <div class="form-group">
+                                        <label class="form-label">YouTube Video URL *</label>
+                                        <input type="url" name="VideoUrl" class="form-control form-control-modern" 
+                                               placeholder="https://www.youtube.com/watch?v=..." required>
+                                        <small class="text-muted">Paste the YouTube video URL</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label class="form-label">Duration (minutes)</label>
+                                        <input type="number" name="Duration" class="form-control form-control-modern" 
+                                               placeholder="15" min="1" max="300">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Study Materials URL</label>
+                                <input type="url" name="MaterialUrl" class="form-control form-control-modern" 
+                                       placeholder="https://drive.google.com/...">
+                                <small class="text-muted">Optional: Link to downloadable materials</small>
+                            </div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <div class="video-preview-section">
+                                <h6>Video Preview</h6>
+                                <div class="video-preview-container">
+                                    <div class="video-preview-placeholder">
+                                        <i class="fas fa-video"></i>
+                                        <p>Enter YouTube URL to preview</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="lesson-settings">
+                                <h6>Settings</h6>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="IsActive" value="true" checked>
+                                    <label class="form-check-label">
+                                        Publish immediately
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        Cancel
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i>
+                        Add Lesson
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Lesson Modal -->
+<div class="modal fade" id="editLessonModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-edit"></i>
+                    Edit Lesson
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Edit form will be loaded here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Preview Modal -->
+<div class="modal fade" id="previewModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-eye"></i>
+                    Lesson Preview
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-0">
+                <div class="video-player-container">
+                    <div id="previewPlayer"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/lesson-management.js"></script>
+}
+
+@functions {
+    private string GetYouTubeThumbnail(string videoUrl)
+    {
+        if (string.IsNullOrEmpty(videoUrl)) return "";
+        
+        var videoId = "";
+        if (videoUrl.Contains("youtube.com/watch?v="))
+        {
+            videoId = videoUrl.Split("v=")[1].Split("&")[0];
+        }
+        else if (videoUrl.Contains("youtu.be/"))
+        {
+            videoId = videoUrl.Split("youtu.be/")[1].Split("?")[0];
+        }
+        
+        return string.IsNullOrEmpty(videoId) ? "" : $"https://img.youtube.com/vi/{videoId}/maxresdefault.jpg";
+    }
+}

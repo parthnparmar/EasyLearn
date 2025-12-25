@@ -1,0 +1,424 @@
+@model EasyLearn.Models.Course
+@{
+    ViewData["Title"] = "Manage Content - " + Model.Title;
+}
+
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4><i class="fas fa-video"></i> @Model.Title - Content Management</h4>
+                    <div>
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addLessonModal">
+                            <i class="fas fa-plus"></i> Add Lesson
+                        </button>
+                        <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addQuizModal">
+                            <i class="fas fa-question-circle"></i> Add Quiz
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- Lessons -->
+                    <h5><i class="fas fa-play"></i> Lessons (@Model.Lessons.Count)</h5>
+                    @if (Model.Lessons.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Title</th>
+                                        <th>Duration</th>
+                                        <th>Video</th>
+                                        <th>Materials</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var lesson in Model.Lessons.OrderBy(l => l.OrderIndex))
+                                    {
+                                        <tr>
+                                            <td>@lesson.OrderIndex</td>
+                                            <td>@lesson.Title</td>
+                                            <td>@lesson.Duration.ToString(@\"mm\:ss\")</td>
+                                            <td>
+                                                @if (!string.IsNullOrEmpty(lesson.VideoUrl))
+                                                {
+                                                    <span class="badge bg-success">YouTube</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-warning">No Video</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                @if (!string.IsNullOrEmpty(lesson.MaterialUrl))
+                                                {
+                                                    <a href="@lesson.MaterialUrl" target="_blank" class="btn btn-sm btn-outline-primary">
+                                                        <i class="fas fa-download"></i>
+                                                    </a>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">None</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                <button class="btn btn-sm btn-outline-primary" onclick="editLesson(@lesson.Id)">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-danger" onclick="deleteLesson(@lesson.Id)">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="text-muted">No lessons added yet.</p>
+                    }
+
+                    <hr>
+
+                    <!-- Quizzes -->
+                    <h5><i class="fas fa-question-circle"></i> Quizzes (@Model.Quizzes.Count)</h5>
+                    @if (Model.Quizzes.Any())
+                    {
+                        <div class="row">
+                            @foreach (var quiz in Model.Quizzes)
+                            {
+                                <div class="col-md-4 mb-3">
+                                    <div class="card">
+                                        <div class="card-body">
+                                            <h6>@quiz.Title</h6>
+                                            <p class="text-muted small">@quiz.Description</p>
+                                            <div class="d-flex justify-content-between">
+                                                <small>@quiz.Questions.Count questions</small>
+                                                <small>@quiz.TimeLimit min</small>
+                                            </div>
+                                            <div class="mt-2">
+                                                <button class="btn btn-sm btn-outline-primary" onclick="editQuiz(@quiz.Id)">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-danger" onclick="deleteQuiz(@quiz.Id)">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="text-muted">No quizzes added yet.</p>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Lesson Modal -->
+<div class="modal fade" id="addLessonModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add New Lesson</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="lessonForm">
+                <div class="modal-body">
+                    <input type="hidden" name="CourseId" value="@Model.Id" />
+                    <input type="hidden" name="OrderIndex" value="@(Model.Lessons.Count + 1)" />
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Title *</label>
+                        <input type="text" name="Title" class="form-control" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <textarea name="Description" class="form-control" rows="3"></textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">YouTube Video URL *</label>
+                        <input type="url" name="VideoUrl" class="form-control" placeholder="https://www.youtube.com/watch?v=..." required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Duration (minutes)</label>
+                        <input type="number" name="Duration" class="form-control" min="1" value="10">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Study Materials</label>
+                        <input type="file" id="materialFile" class="form-control" accept=".pdf,.doc,.docx">
+                        <input type="hidden" name="MaterialUrl" id="materialUrl">
+                        <small class="text-muted">Upload PDF, DOC, or DOCX files</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add Lesson</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Add Quiz Modal -->
+<div class="modal fade" id="addQuizModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Create Quiz</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="quizForm">
+                <div class="modal-body">
+                    <input type="hidden" name="CourseId" value="@Model.Id" />
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Quiz Title *</label>
+                                <input type="text" name="Title" class="form-control" required>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label class="form-label">Time Limit (min)</label>
+                                <input type="number" name="TimeLimit" class="form-control" value="30" min="1">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label class="form-label">Passing Score (%)</label>
+                                <input type="number" name="PassingScore" class="form-control" value="70" min="1" max="100">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <textarea name="Description" class="form-control" rows="2"></textarea>
+                    </div>
+                    
+                    <h6>Questions</h6>
+                    <div id="questionsContainer">
+                        <div class="question-item border p-3 mb-3">
+                            <div class="row">
+                                <div class="col-md-8">
+                                    <label class="form-label">Question 1 *</label>
+                                    <textarea name="Questions[0].Text" class="form-control" rows="2" required></textarea>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Type</label>
+                                    <select name="Questions[0].Type" class="form-select" onchange="updateAnswers(this, 0)">
+                                        <option value="1">Multiple Choice</option>
+                                        <option value="2">True/False</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="answers-container mt-3" id="answers-0">
+                                <label class="form-label">Answers</label>
+                                <div class="answer-item d-flex mb-2">
+                                    <div class="form-check me-2">
+                                        <input type="radio" name="Questions[0].CorrectAnswer" value="0" class="form-check-input">
+                                    </div>
+                                    <input type="text" name="Questions[0].Answers[0].Text" class="form-control" placeholder="Answer option" required>
+                                    <input type="hidden" name="Questions[0].Answers[0].IsCorrect" value="false">
+                                </div>
+                                <div class="answer-item d-flex mb-2">
+                                    <div class="form-check me-2">
+                                        <input type="radio" name="Questions[0].CorrectAnswer" value="1" class="form-check-input">
+                                    </div>
+                                    <input type="text" name="Questions[0].Answers[1].Text" class="form-control" placeholder="Answer option" required>
+                                    <input type="hidden" name="Questions[0].Answers[1].IsCorrect" value="false">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button type="button" class="btn btn-outline-primary" onclick="addQuestion()">
+                        <i class="fas fa-plus"></i> Add Question
+                    </button>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success">Create Quiz</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+let questionCount = 1;
+
+// Lesson Form
+document.getElementById('lessonForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const fileInput = document.getElementById('materialFile');
+    
+    // Upload material file if selected
+    if (fileInput.files[0]) {
+        const materialFormData = new FormData();
+        materialFormData.append('file', fileInput.files[0]);
+        materialFormData.append('courseId', '@Model.Id');
+        
+        const uploadResponse = await fetch('/instructor/upload-material', {
+            method: 'POST',
+            body: materialFormData
+        });
+        
+        const uploadResult = await uploadResponse.json();
+        if (uploadResult.success) {
+            formData.set('MaterialUrl', uploadResult.url);
+        }
+    }
+    
+    const response = await fetch('/instructor/create-lesson', {
+        method: 'POST',
+        body: formData
+    });
+    
+    const result = await response.json();
+    if (result.success) {
+        location.reload();
+    } else {
+        alert('Error: ' + result.message);
+    }
+});
+
+// Quiz Form
+document.getElementById('quizForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const data = {};
+    
+    // Convert FormData to object
+    for (let [key, value] of formData.entries()) {
+        if (key.includes('[') && key.includes(']')) {
+            // Handle array properties
+            const matches = key.match(/(\w+)\[(\d+)\]\.(\w+)(?:\[(\d+)\]\.(\w+))?/);
+            if (matches) {
+                const [, arrayName, index, prop, subIndex, subProp] = matches;
+                
+                if (!data[arrayName]) data[arrayName] = [];
+                if (!data[arrayName][index]) data[arrayName][index] = {};
+                
+                if (subIndex !== undefined) {
+                    if (!data[arrayName][index][prop]) data[arrayName][index][prop] = [];
+                    if (!data[arrayName][index][prop][subIndex]) data[arrayName][index][prop][subIndex] = {};
+                    data[arrayName][index][prop][subIndex][subProp] = value;
+                } else {
+                    data[arrayName][index][prop] = value;
+                }
+            }
+        } else {
+            data[key] = value;
+        }
+    }
+    
+    // Set correct answers
+    document.querySelectorAll('.question-item').forEach((item, qIndex) => {
+        const correctRadio = item.querySelector(`input[name="Questions[${qIndex}].CorrectAnswer"]:checked`);
+        if (correctRadio && data.Questions[qIndex]) {
+            const correctIndex = parseInt(correctRadio.value);
+            data.Questions[qIndex].Answers.forEach((answer, aIndex) => {
+                answer.IsCorrect = aIndex === correctIndex;
+            });
+        }
+    });
+    
+    const response = await fetch('/instructor/create-quiz', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    });
+    
+    const result = await response.json();
+    if (result.success) {
+        location.reload();
+    } else {
+        alert('Error: ' + result.message);
+    }
+});
+
+function addQuestion() {
+    const container = document.getElementById('questionsContainer');
+    const questionHtml = `
+        <div class="question-item border p-3 mb-3">
+            <div class="row">
+                <div class="col-md-8">
+                    <label class="form-label">Question ${questionCount + 1} *</label>
+                    <textarea name="Questions[${questionCount}].Text" class="form-control" rows="2" required></textarea>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Type</label>
+                    <select name="Questions[${questionCount}].Type" class="form-select" onchange="updateAnswers(this, ${questionCount})">
+                        <option value="1">Multiple Choice</option>
+                        <option value="2">True/False</option>
+                    </select>
+                </div>
+            </div>
+            <div class="answers-container mt-3" id="answers-${questionCount}">
+                <label class="form-label">Answers</label>
+                <div class="answer-item d-flex mb-2">
+                    <div class="form-check me-2">
+                        <input type="radio" name="Questions[${questionCount}].CorrectAnswer" value="0" class="form-check-input">
+                    </div>
+                    <input type="text" name="Questions[${questionCount}].Answers[0].Text" class="form-control" placeholder="Answer option" required>
+                    <input type="hidden" name="Questions[${questionCount}].Answers[0].IsCorrect" value="false">
+                </div>
+                <div class="answer-item d-flex mb-2">
+                    <div class="form-check me-2">
+                        <input type="radio" name="Questions[${questionCount}].CorrectAnswer" value="1" class="form-check-input">
+                    </div>
+                    <input type="text" name="Questions[${questionCount}].Answers[1].Text" class="form-control" placeholder="Answer option" required>
+                    <input type="hidden" name="Questions[${questionCount}].Answers[1].IsCorrect" value="false">
+                </div>
+            </div>
+        </div>
+    `;
+    container.insertAdjacentHTML('beforeend', questionHtml);
+    questionCount++;
+}
+
+function updateAnswers(select, questionIndex) {
+    const container = document.getElementById(`answers-${questionIndex}`);
+    const type = select.value;
+    
+    if (type === '2') { // True/False
+        container.innerHTML = `
+            <label class="form-label">Answers</label>
+            <div class="answer-item d-flex mb-2">
+                <div class="form-check me-2">
+                    <input type="radio" name="Questions[${questionIndex}].CorrectAnswer" value="0" class="form-check-input">
+                </div>
+                <input type="text" name="Questions[${questionIndex}].Answers[0].Text" class="form-control" value="True" readonly>
+                <input type="hidden" name="Questions[${questionIndex}].Answers[0].IsCorrect" value="false">
+            </div>
+            <div class="answer-item d-flex mb-2">
+                <div class="form-check me-2">
+                    <input type="radio" name="Questions[${questionIndex}].CorrectAnswer" value="1" class="form-check-input">
+                </div>
+                <input type="text" name="Questions[${questionIndex}].Answers[1].Text" class="form-control" value="False" readonly>
+                <input type="hidden" name="Questions[${questionIndex}].Answers[1].IsCorrect" value="false">
+            </div>
+        `;
+    }
+}
+</script>
