@@ -65,15 +65,8 @@ cd EasyLearn
 dotnet restore
 ```
 
-### 3. Configure Database Connection
-Update the connection string in `appsettings.json` if needed:
-```json
-{
-  "ConnectionStrings": {
-    "DefaultConnection": "Server=(localdb)\\mssqllocaldb;Database=EasyLearnDb;Trusted_Connection=true;MultipleActiveResultSets=true"
-  }
-}
-```
+
+
 
 ### 4. Create and Seed Database
 The application will automatically create the database and seed initial data on first run.
